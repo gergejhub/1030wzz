@@ -581,32 +581,7 @@
   body.presenter .table td{ font-size: 14px; }
   body.presenter .riskTitle{ font-size: 18px; }
 
-  .teleModal{ position:fixed; inset:0; display:none; z-index:99999; background: rgba(6,9,18,0.92); }
-  .teleModal[aria-hidden="false"]{ display:flex; flex-direction:column; }
-  .teleTop{
-    display:flex; align-items:flex-start; justify-content:space-between; gap: 12px;
-    padding: 14px 16px; border-bottom:1px solid rgba(255,255,255,0.12);
-    background: rgba(8,12,22,0.65);
-  }
-  .teleBrand{ display:flex; flex-direction:column; gap: 4px; }
-  .teleTitle{ font-weight: 950; letter-spacing:.2px; font-size: 16px; }
-  .teleMeta{ color: rgba(233,238,252,0.78); font-size: 12px; font-weight: 750; }
-  .teleControls{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; justify-content:flex-end; }
-  .teleSlider{ display:flex; align-items:center; gap: 8px; }
-  .teleLbl{ font-size: 12px; opacity: .8; font-weight: 850; }
-  #teleSpeed, #teleFont{ width: 140px; }
-  .teleBody{ flex:1; overflow:auto; padding: 18px 22px; }
-  #teleText{
-    white-space: pre-wrap;
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: 32px;
-    line-height: 1.55;
-    color: rgba(233,238,252,0.95);
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-</style>
+  </style>
 
   <!-- Leaflet (map) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -621,7 +596,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>Wizz Network Weather & Delay Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.5-presenter+metar</span></small>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.6-metar-compare</span></small>
         </div>
       </div>
 
@@ -760,8 +735,7 @@
           </div>
           <div class="riskRight">
             <button class="btn primary" id="btnPresenter">Presenter mode</button>
-            <button class="btn" id="btnTele">Teleprompter</button>
-            <button class="btn" id="btnFull">Fullscreen</button>
+<button class="btn" id="btnFull">Fullscreen</button>
           </div>
         </div>
 <div class="kpis">
@@ -889,7 +863,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.5-presenter+metar</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.6-metar-compare</span></div>
 </main>
   </div>
 
@@ -1021,79 +995,13 @@ function nowLocal(){
   }
 
   // Teleprompter overlay
-  let TELE_RUNNING = false;
   let TELE_SPEED = 55; // px/s
   let TELE_RAF = null;
   let TELE_LAST = 0;
 
-  function openTeleprompter(text){
-    const modal = document.getElementById("teleModal");
-    const pre = document.getElementById("teleText");
-    const body = document.getElementById("teleBody");
-    if (!modal || !pre || !body) return;
-    pre.textContent = text || "—";
-    body.scrollTop = 0;
-    modal.setAttribute("aria-hidden", "false");
-    const left = document.getElementById("teleMetaLeft");
-    const right = document.getElementById("teleMetaRight");
-    if (left) left.textContent = `Source: ${PDF_SOURCE || "—"}`;
-    if (right) right.textContent = `Generated: ${nowLocal()}`;
-  }
-
-  function closeTeleprompter(){
-    const modal = document.getElementById("teleModal");
-    if (!modal) return;
-    stopTeleScroll();
-    stopSpeak();
-    modal.setAttribute("aria-hidden", "true");
-  }
-
-  function teleTick(ts){
-    if (!TELE_RUNNING) return;
-    const body = document.getElementById("teleBody");
-    if (!body){ TELE_RUNNING = false; return; }
-    if (!TELE_LAST) TELE_LAST = ts;
-    const dt = (ts - TELE_LAST) / 1000.0;
-    TELE_LAST = ts;
-    body.scrollTop += TELE_SPEED * dt;
-    TELE_RAF = requestAnimationFrame(teleTick);
-  }
-
-  function startTeleScroll(){
-    TELE_RUNNING = true;
-    TELE_LAST = 0;
-    if (!TELE_RAF) TELE_RAF = requestAnimationFrame(teleTick);
-  }
-
-  function stopTeleScroll(){
-    TELE_RUNNING = false;
-    TELE_LAST = 0;
-    if (TELE_RAF){ cancelAnimationFrame(TELE_RAF); TELE_RAF = null; }
-  }
-
-  function buildTeleprompterText(){
-    const lvl = document.getElementById("riskLevel") ? document.getElementById("riskLevel").textContent : "—";
-    const sub = document.getElementById("riskSub") ? document.getElementById("riskSub").textContent : "";
-    const readout = document.getElementById("readoutBox") ? document.getElementById("readoutBox").textContent : "";
-    const title = document.getElementById("rTitle") ? document.getElementById("rTitle").textContent : "Wizz Network Weather & Delay Brief";
-    return `${title}\n\nNetwork disruption risk: ${lvl}\n${sub}\n\n${readout}`;
-  }
-
 
   // ===== Teleprompter speech (built-in Web Speech API) =====
-  let SPEAKING = false;
   let SPEAK_UTT = null;
-
-  function canSpeak(){
-    return ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
-  }
-
-  function startSpeak(text){
-    try{
-      if (!canSpeak()){
-        setStatus("buildStatus", "Text-to-speech is not available in this browser.");
-        return;
-      }
       stopSpeak();
       const t = (text || "").trim();
       if (!t){
@@ -1112,23 +1020,10 @@ function nowLocal(){
       setStatus("buildStatus", "Speech failed (browser policy).");
     }
   }
-
-  function stopSpeak(){
-    try{
-      if (canSpeak()){
-        window.speechSynthesis.cancel();
-      }
     } catch(e){}
     SPEAKING = false;
     SPEAK_UTT = null;
   }
-
-  function teleEscapeHandler(e){
-    if (e.key === "Escape"){
-      const modal = document.getElementById("teleModal");
-      if (modal && modal.getAttribute("aria-hidden") === "false"){
-        closeTeleprompter();
-      }
     }
   }
 
@@ -2148,6 +2043,11 @@ async function buildReport(){
     $("debugBox").textContent = dbg;
 
     setStatus("buildStatus", "Report built.");
+    try{
+      const auto = document.getElementById("chkAutoMetar");
+      if (auto && auto.checked) fetchLiveMetars();
+    } catch(e){}
+
     // JS heartbeat
     if (document.getElementById("buildStatus")) document.getElementById("buildStatus").textContent = "Report built. (JS OK)";
   }
@@ -2268,8 +2168,7 @@ async function buildReport(){
   if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
   if ($("btnPresenter")) $("btnPresenter").addEventListener("click", togglePresenterMode);
   if ($("btnFull")) $("btnFull").addEventListener("click", goFullscreen);
-  if ($("btnTele")) $("btnTele").addEventListener("click", () => openTeleprompter(buildTeleprompterText()));
-  if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
+if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
   if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
   if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
   // Auto-load repo files on startup (best-effort)
@@ -2281,18 +2180,8 @@ async function buildReport(){
     if ($("copyModalBackdrop")) $("copyModalBackdrop").addEventListener("click", closeCopyModal);
     if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } 
     // Teleprompter controls
-    if (document.getElementById("btnTeleClose")) document.getElementById("btnTeleClose").addEventListener("click", closeTeleprompter);
-    if (document.getElementById("btnTelePlay")) document.getElementById("btnTelePlay").addEventListener("click", startTeleScroll);
-    if (document.getElementById("btnTelePause")) document.getElementById("btnTelePause").addEventListener("click", stopTeleScroll);
-    if (document.getElementById("btnTeleFull")) document.getElementById("btnTeleFull").addEventListener("click", goFullscreen);
-    if (document.getElementById("btnTeleSpeak")) document.getElementById("btnTeleSpeak").addEventListener("click", () => { openTeleprompter(buildTeleprompterText()); startSpeak(buildTeleprompterText()); });
-    if (document.getElementById("btnTeleStopSpeak")) document.getElementById("btnTeleStopSpeak").addEventListener("click", stopSpeak);
     document.addEventListener("keydown", teleEscapeHandler);
-    if (document.getElementById("teleSpeed")) document.getElementById("teleSpeed").addEventListener("input", (e) => { TELE_SPEED = parseInt(e.target.value,10) || 55; });
-    if (document.getElementById("teleFont")) document.getElementById("teleFont").addEventListener("input", (e) => {
-      const v = parseInt(e.target.value,10) || 32;
-      const t = document.getElementById("teleText");
-      if (t) t.style.fontSize = v + "px";
+if (t) t.style.fontSize = v + "px";
     });
 
   });if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
@@ -2532,6 +2421,21 @@ async function buildReport(){
     }
 
     tb.innerHTML = rows.join("") || '<tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>';
+    // Update summary counts
+    const st = document.getElementById("metarStatus");
+    if (st){
+      const htmlRows = Array.from(tb.querySelectorAll("tr"));
+      let missing=0, bad=0, warn=0, ok=0;
+      for (const r of htmlRows){
+        const t = (r.innerText || "");
+        if (t.includes("No METAR")) missing++;
+        if (t.includes("confirmed") || t.includes("Gusts") || t.includes("TS observed") || t.includes("Freezing")) bad++;
+        if (t.includes("Fog present") || t.includes("Snow reported") || t.includes("Gusts 25")) warn++;
+        if (t.includes("not observed") || t.includes("No TS") || t.includes("No wintry") || t.includes("No strong gusts")) ok++;
+      }
+      st.textContent = `METAR compare: ${ok} OK · ${warn} WATCH · ${bad} CONFIRMS · ${missing} missing`;
+    }
+
   }
 
   async function fetchLiveMetars(){
@@ -2597,31 +2501,18 @@ async function buildReport(){
       </div>
     </div>
   </div>
+<div class="teleControls">
 
 
-  <!-- Teleprompter / Presenter overlay -->
-  <div id="teleModal" class="teleModal" aria-hidden="true">
-    <div class="teleTop">
-      <div class="teleBrand">
-        <div class="teleTitle">Management readout</div>
-        <div class="teleMeta"><span id="teleMetaLeft">—</span> · <span id="teleMetaRight">—</span></div>
-      </div>
-      <div class="teleControls">
-        <button class="btn" id="btnTelePlay">Scroll</button>
-        <button class="btn" id="btnTelePause">Pause</button>
-        <button class="btn primary" id="btnTeleSpeak">Speak</button>
-        <button class="btn" id="btnTeleStopSpeak">Stop voice</button>
-        <div class="teleSlider">
+
+<div class="teleSlider">
           <div class="teleLbl">Speed</div>
-          <input id="teleSpeed" type="range" min="10" max="140" value="55" />
-        </div>
+</div>
         <div class="teleSlider">
           <div class="teleLbl">Text</div>
-          <input id="teleFont" type="range" min="18" max="54" value="32" />
-        </div>
-        <button class="btn" id="btnTeleFull">Fullscreen</button>
-        <button class="btn warn" id="btnTeleClose">Close</button>
-      </div>
+</div>
+
+</div>
     </div>
     <div class="teleBody" id="teleBody">
       <pre id="teleText">—</pre>
@@ -2631,7 +2522,7 @@ async function buildReport(){
 </body>
 </html
       <div class="card" style="margin-top:12px;">
-        <h4>Live METAR cross-check (affected airports only)</h4>
+        <h4>NOP forecast vs Live METAR (affected airports only)</h4>
         <div class="hint">
           Optional: pulls the latest METARs for the airports shown in “Affected Wizz airports”.
           Source: aviationweather.gov (public). If your corporate network blocks it, use “Paste METARs”.
@@ -2640,6 +2531,7 @@ async function buildReport(){
         <div class="row" style="margin-top:10px; gap:10px; flex-wrap:wrap;">
           <button class="btn" id="btnFetchMetar">Fetch live METARs</button>
           <button class="btn" id="btnToggleMetarPaste">Paste METARs instead</button>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkAutoMetar" checked /> Auto-fetch after “Build report”</label>
           <div class="status" id="metarStatus" style="flex:1 1 auto;">—</div>
         </div>
 
@@ -2662,7 +2554,7 @@ async function buildReport(){
                 <th>Vis</th>
                 <th>WX</th>
                 <th>Ceiling</th>
-                <th>Forecast vs live</th>
+                <th>Forecast vs live (evaluation)</th>
                 <th>Raw METAR</th>
               </tr>
             </thead>
