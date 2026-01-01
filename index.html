@@ -6,7 +6,12 @@
   <title>Wizz NOP Weather Brief — PDF → Management Report (EN)</title>
 
   <!-- PDF.js (client-side PDF text extraction) -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.min.js">
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
+</script>
 
   <script>
 // Global error surface (so failures don't look like "nothing happens")
@@ -21,15 +26,35 @@
       var el = document.getElementById("pdfStatus") || document.getElementById("buildStatus");
       if (el) el.textContent = msg;
     });
-  </script>
+  
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
+</script>
 
 
   <!-- DOCX export (client-side) -->
-  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
-  <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js">
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
+</script>
+  <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js">
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
+</script>
 
   <!-- PPTX export (client-side) -->
-  <script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js">
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
+</script>
 
   <style>
     :root{
@@ -380,11 +405,40 @@
       .raw{ background: #fafafa; color: #111; border: 1px solid #ddd; }
       .badge{ border: 1px solid #999; }
     }
-  </style>
+  
+  .modal{ position:fixed; inset:0; display:none; z-index:9999; }
+  .modal[aria-hidden="false"]{ display:block; }
+  .modalBackdrop{ position:absolute; inset:0; background:rgba(5,8,18,0.72); }
+  .modalCard{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:min(980px, calc(100vw - 32px)); max-height:calc(100vh - 32px);
+    background:rgba(15,18,28,0.98); border:1px solid rgba(255,255,255,0.12);
+    border-radius:16px; box-shadow:0 20px 80px rgba(0,0,0,.55);
+    padding:14px; display:flex; flex-direction:column; gap:10px;
+  }
+  .modalHead{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .modalTitle{ font-weight:900; letter-spacing:.2px; font-size:16px; }
+  .modalSub{ opacity:.8; font-size:12px; margin-top:2px; }
+  #copyModalText{
+    width:100%; min-height:340px; flex:1;
+    border-radius:12px; border:1px solid rgba(255,255,255,0.12);
+    background:rgba(9,12,20,0.92);
+    color:rgba(233,238,252,0.95);
+    font-family: var(--mono); font-size:12px; line-height:1.5;
+    padding:12px; resize:vertical;
+  }
+  .modalActions{ display:flex; gap:10px; justify-content:flex-end; }
+
+</style>
 
   <!-- Leaflet (map) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
+</script>
 
 </head>
 
@@ -590,6 +644,12 @@
             <h4>Map view (hotspots)</h4>
             <div class="hint" style="margin-bottom:8px;">
               The map uses auto-resolved airport coordinates from a public dataset. If your corporate network blocks external datasets or map tiles, markers may not display.
+            <div class="row" style="margin-top:10px; gap:10px; align-items:center;">
+              <label style="margin:0; min-width:120px;">WxCharts</label>
+              <select id="wxSelect" class="select" style="flex:1;"></select>
+              <button class="btn" id="btnWxOpen">Open WxCharts</button>
+            </div>
+            <div class="hint" style="margin-top:6px;">Opens WxCharts for the selected ICAO in a new tab. (Link format uses an ICAO query parameter.)</div>
             </div>
             <div id="map" style="height:360px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); overflow:hidden;"></div>
           </div>
@@ -1083,7 +1143,77 @@ function scoreAndTag(item){
 
   // Copy summary
   
-  function buildCopilotPrompt(){
+  
+  async function tryCopyText(text){
+    // Primary: async Clipboard API (requires HTTPS + permissions)
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch(e){}
+    }
+    // Fallback: execCommand
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly","readonly");
+      ta.style.position = "fixed";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    } catch(e){
+      return false;
+    }
+  }
+
+  function openCopyModal(text){
+    const modal = document.getElementById("copyModal");
+    const ta = document.getElementById("copyModalText");
+    if (!modal || !ta) return;
+    ta.value = text;
+    modal.setAttribute("aria-hidden","false");
+    setTimeout(() => { ta.focus(); ta.select(); }, 50);
+  }
+
+  function closeCopyModal(){
+    const modal = document.getElementById("copyModal");
+    if (!modal) return;
+    modal.setAttribute("aria-hidden","true");
+  }
+
+
+  function wxUrl(icao){
+    // Common deep-link pattern observed on external link lists: wxcharts.com/?icao=XXXX
+    return `https://www.wxcharts.com/?icao=${encodeURIComponent(icao)}`;
+  }
+
+  function populateWxSelect(items){
+    const sel = document.getElementById("wxSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+    const unique = Array.from(new Set(items.map(x => x.icao)));
+    // Prefer impacted list order (already sorted by score)
+    for (const icao of unique){
+      const opt = document.createElement("option");
+      const st = stationLabel(icao);
+      const label = (st.station && st.station !== "—") ? `${icao} — ${st.station}` : icao;
+      opt.value = icao;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    }
+    if (!unique.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "—";
+      sel.appendChild(opt);
+    }
+  }
+
+function buildCopilotPrompt(){
     const rows = Array.from(document.querySelectorAll("#hotspotsTbody tr")).map(tr => {
       const tds = tr.querySelectorAll("td");
       if (tds.length < 8) return null;
@@ -1122,8 +1252,13 @@ function scoreAndTag(item){
 
   async function copyCopilotPrompt(){
     const prompt = buildCopilotPrompt();
-    await navigator.clipboard.writeText(prompt);
-    setStatus("buildStatus", "Copied: Copilot prompt (paste into Microsoft Copilot Chat).");
+    const ok = await tryCopyText(prompt);
+    if (ok){
+      setStatus("buildStatus", "Copied: Copilot prompt (paste into Microsoft Copilot Chat).");
+    } else {
+      setStatus("buildStatus", "Clipboard blocked: opened prompt window for manual copy.");
+      openCopyModal(prompt);
+    }
   }
 
 async function copyMeetingSummary(){
@@ -1479,7 +1614,34 @@ async function copyMeetingSummary(){
     }
   }
 
-  function buildReadout(matched, synopsis, enroute){
+  
+  function simplifySynopsis(text){
+    const t = String(text||"").replace(/\s+/g," ").trim();
+    if (!t) return [];
+    const out = [];
+
+    // Basic keyword extraction to create lay bullets
+    const hasLow = /low pressure|depression|cyclone/i.test(t);
+    const hasFront = /front|frontal/i.test(t);
+    const hasStorm = /storm/i.test(t);
+    const hasWind = /strong winds|gale|gust/i.test(t);
+    const hasConv = /thunder|convection|cb\b|ts\b/i.test(t);
+    const hasWinter = /snow|freezing|ice|blowing snow|fz/i.test(t);
+
+    if (hasStorm) out.push("One or more named storm systems are influencing parts of Europe today.");
+    else if (hasLow) out.push("Low pressure systems are driving unstable weather across parts of Europe today.");
+
+    if (hasFront) out.push("Frontal activity is moving across regions, so conditions may change quickly through the day.");
+    if (hasWind) out.push("Expect periods of strong and gusty winds, which can reduce runway/ground capacity.");
+    if (hasConv) out.push("Thunderstorm activity is possible in some areas, which may cause tactical ATFM measures and diversions.");
+    if (hasWinter) out.push("Winter hazards are present (snow/freezing fog/freezing precipitation), impacting de-icing and low-visibility operations.");
+
+    // If we didn't find anything, provide a generic
+    if (!out.length) out.push("The NOP synopsis indicates weather-driven capacity variability across parts of Europe today.");
+    return out.slice(0,3);
+  }
+
+function buildReadout(matched, synopsis, enroute){
     // 30–60s script, meeting-friendly.
     const reds = matched.filter(x => x.sev === "RED");
     const ambs = matched.filter(x => x.sev === "AMBER");
@@ -1648,6 +1810,7 @@ async function buildReport(){
 
     // Map + management readout
     renderMap(top);
+    populateWxSelect(top);
     if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = buildReadout(matched, synopsis, enroute);
 
 
@@ -1866,6 +2029,31 @@ async function buildReport(){
     };
   }
 
+
+  // Modal copy fallback
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
+  });
 </script>
+
+  <!-- Copy / Copilot prompt modal -->
+  <div id="copyModal" class="modal" aria-hidden="true">
+    <div class="modalBackdrop" id="copyModalBackdrop"></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="copyModalTitle">
+      <div class="modalHead">
+        <div>
+          <div id="copyModalTitle" class="modalTitle">Copilot prompt</div>
+          <div class="modalSub">If clipboard is blocked, press Ctrl+C after selecting the text.</div>
+        </div>
+        <button class="btn" id="btnCloseModal">Close</button>
+      </div>
+      <textarea id="copyModalText" spellcheck="false"></textarea>
+      <div class="modalActions">
+        <button class="btn primary" id="btnCopyModal">Copy to clipboard</button>
+        <button class="btn" id="btnSelectAll">Select all</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
