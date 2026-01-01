@@ -869,6 +869,56 @@
 return items;
   }
 
+  // Global fallback: parse any "ICAO + time window + snippet" patterns anywhere in the extracted PDF text.
+  // This is necessary when the "Airports Overview" is embedded as an image/table and therefore not extractable as text.
+  function parseGlobalIcaoItems(text){
+    const t = text.replace(/\r/g,"");
+    // Prefer line-based parsing first
+    const lines = t.split("\n").map(x => x.trim()).filter(Boolean);
+    const items = [];
+
+    // Pattern like: EHAM 0106/0111 25020G30KT ... or EGSS 0116/0124 29017G27KT
+    const reLine = /^([A-Z]{4})\s+(\d{4}\/\d{4})\s+(.{8,})$/;
+
+    for (const line of lines){
+      const m = line.match(reLine);
+      if (m){
+        items.push({
+          icao: m[1],
+          time: m[2],
+          snippet: m[3].replace(/\s+/g," ").trim(),
+          raw: line
+        });
+      }
+    }
+
+    // If line-based fails (common when PDF collapses lines), use a flat scan.
+    if (items.length < 3){
+      const flat = t.replace(/\n+/g," ").replace(/\s+/g," ").trim();
+      const re = /(\b[A-Z]{4}\b)\s+(\d{4}\/\d{4})\s+(.+?)(?=\s+\b[A-Z]{4}\b\s+\d{4}\/\d{4}\b\s+|$)/g;
+      let mm;
+      while ((mm = re.exec(flat)) !== null){
+        const icao = mm[1];
+        const time = mm[2];
+        const snippet = (mm[3] || "").trim();
+        if (snippet.length < 8) continue;
+        items.push({ icao, time, snippet, raw: `${icao} ${time} ${snippet}` });
+      }
+    }
+
+    // De-dup by ICAO+time+snippet
+    const seen = new Set();
+    const out = [];
+    for (const it of items){
+      const k = `${it.icao}|${it.time}|${it.snippet}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(it);
+    }
+    return out;
+  }
+
+
   // Risk tagging / scoring (heuristic)
   function scoreAndTag(item){
     const s = (item.raw || "").toUpperCase();
@@ -1396,12 +1446,29 @@ async function buildReport(){
     const enroute = extractEnroute(PDF_TEXT);
     const overview = parseAirportsOverview(PDF_TEXT);
 
+    // If Airports Overview is not extractable (often image/table), fall back to global ICAO/time parsing
+    let overviewItems = overview;
+    if (!overviewItems || !overviewItems.length){
+      const globalItems = parseGlobalIcaoItems(PDF_TEXT);
+      overviewItems = globalItems;
+      // Surface this in diagnostics
+      if (globalItems.length){
+        setStatus("buildStatus", `Airports Overview not extracted as text; using global ICAO/time parsing (${globalItems.length} items).`);
+      } else {
+        setStatus("buildStatus", "Airports Overview not extracted as text; global ICAO/time parsing also found 0 items.");
+      }
+    }
+
+
     // Populate raw Airports Overview section (debug)
     const rawAO = extractSection(PDF_TEXT, "Airports Overview", ["En-route", "En route", "En-Route", "Disclaimer", "Legend", "Definitions"]);
     if (document.getElementById("airportsOverviewBox")) document.getElementById("airportsOverviewBox").textContent = rawAO || "—";
+    if (rawAO && rawAO.trim().toLowerCase() === "airports overview") {
+      document.getElementById("airportsOverviewBox").textContent = rawAO + "\n\n(Note: The PDF likely contains the Airports Overview as a non-text table/image. Using global ICAO/time parsing instead.)";
+    }
 
 
-    let matched = overview
+    let matched = overviewItems
       .filter(it => WIZZ_ICAOS.has(it.icao))
       .map(it => ({ ...it, ...scoreAndTag(it) }))
       .filter(it => it.score >= minScore);
@@ -1484,7 +1551,7 @@ async function buildReport(){
     // Diagnostics
     const dbg = [
       `PDF loaded: ${PDF_LOADED_AT || "—"}`,
-      `Overview items parsed: ${overview.length}`,
+      `Overview items parsed: ${overviewItems.length}`,
       `Wizz ICAOs loaded: ${WIZZ_ICAOS.size}`,
       `Station mapping entries: ${STATION_MAP.size}`,
       `Core bases loaded: ${CORE_BASES.size}`,
