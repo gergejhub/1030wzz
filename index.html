@@ -595,6 +595,9 @@
           </div>
           <div class="card">
             <h4>Management readout (30–60s script)</h4>
+            <div class="row" style="margin-top:10px; gap:8px;">
+              <button class="btn" id="btnCopilot">Copy Copilot prompt (rewrite script)</button>
+            </div>
             <div class="raw" id="readoutBox">—</div>
             <div class="hint" style="margin-top:8px;">
               This script is generated from the extracted NOP synopsis + Wizz-filtered hotspots. It is deterministic (no external AI calls) and safe to read verbatim.
@@ -1079,7 +1082,51 @@ function scoreAndTag(item){
   }
 
   // Copy summary
-  async function copyMeetingSummary(){
+  
+  function buildCopilotPrompt(){
+    const rows = Array.from(document.querySelectorAll("#hotspotsTbody tr")).map(tr => {
+      const tds = tr.querySelectorAll("td");
+      if (tds.length < 8) return null;
+      const sev = tds[0].innerText.trim();
+      const risk = tds[1].innerText.trim();
+      const icao = tds[2].innerText.trim().split(/\s+/)[0];
+      const station = tds[3].innerText.trim();
+      const time = tds[4].innerText.trim();
+      const drivers = tds[5].innerText.trim();
+      const plain = tds[6].innerText.trim();
+      const snip = tds[7].innerText.trim();
+      return { sev, risk, icao, station, time, drivers, plain, snip };
+    }).filter(Boolean);
+
+    const synopsis = (document.getElementById("synopsisBox")?.textContent || "").trim();
+    const enroute = (document.getElementById("enrouteBox")?.textContent || "").trim();
+
+    const top = rows.slice(0, 8).map(r => `- ${r.icao} (${r.station || "—"}) | ${r.sev}/${r.risk} | ${r.time} | ${r.drivers} | ${r.plain} | ${r.snip}`).join("\n");
+
+    return [
+      "Rewrite a 30–60 second executive meeting script in clear business English.",
+      "Audience: airline senior management (non-technical). Tone: concise, confident, actionable.",
+      "Requirements:",
+      "• Mention 3–6 most relevant airports by name and ICAO, grouped by severity (RED first).",
+      "• Include 1 line on network-wide drivers.",
+      "• End with 3 concrete actions for OCC/Network Control.",
+      "",
+      "Context (NOP extracted):",
+      `Synopsis: ${synopsis || "—"}`,
+      `En-route notes: ${enroute || "—"}`,
+      "",
+      "Wizz-relevant hotspots (top):",
+      top || "—",
+    ].join("\n");
+  }
+
+  async function copyCopilotPrompt(){
+    const prompt = buildCopilotPrompt();
+    await navigator.clipboard.writeText(prompt);
+    setStatus("buildStatus", "Copied: Copilot prompt (paste into Microsoft Copilot Chat).");
+  }
+
+async function copyMeetingSummary(){
     const execLis = Array.from($("execBullets").querySelectorAll("li")).map(li => "- " + li.innerText);
     const topRows = Array.from($("hotBody").querySelectorAll("tr")).slice(0, 10).map(tr => {
       const tds = tr.querySelectorAll("td");
@@ -1520,6 +1567,15 @@ async function buildReport(){
 
     matched.sort((a,b) => (b.score - a.score) || (a.icao.localeCompare(b.icao)));
 
+    // Resolve airport info (name/city/country) + coordinates before building summaries/tables
+    // This enables ICAO decoding (airport names) without manual mapping uploads.
+    try{
+      await ensureCoordsForIcaos(new Set(matched.map(x => x.icao)));
+    } catch(e){
+      console.warn(e);
+    }
+
+
     // KPIs
     $("rGenerated").textContent = nowLocal();
     $("rSource").textContent = PDF_SOURCE || "—";
@@ -1591,7 +1647,6 @@ async function buildReport(){
     $("enrouteBox").textContent = enroute || "—";
 
     // Map + management readout
-    await ensureCoordsForIcaos(new Set(top.map(x => x.icao)));
     renderMap(top);
     if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = buildReadout(matched, synopsis, enroute);
 
