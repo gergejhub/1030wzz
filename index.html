@@ -708,6 +708,11 @@
             <h4>Management readout (30–60s script)</h4>
             <div class="row" style="margin-top:10px; gap:8px;">
               <button class="btn" id="btnCopilot" onclick="copyCopilotPrompt()">Copy Copilot prompt (rewrite script)</button>
+              <select id="copilotMode" class="select" style="min-width:160px;">
+                <option value="work" selected>Copilot for Work</option>
+                <option value="consumer">Copilot (consumer)</option>
+              </select>
+              <div class="hint" style="margin:0;">Opens Copilot in a new tab. You only need to paste the prompt.</div>
             </div>
             <div class="raw" id="readoutBox">—</div>
             <div class="hint" style="margin-top:8px;">
@@ -764,6 +769,27 @@
 
   // Helpers
   const $ = (id) => document.getElementById(id);
+
+
+  // External tools (opened in a new tab). Note: we cannot auto-paste into Copilot due to browser security.
+  const COPILOT_URLS = {
+    work: "https://copilot.cloud.microsoft.com/",
+    consumer: "https://copilot.microsoft.com/"
+  };
+  let COPILOT_DEFAULT = "work";
+
+  function openCopilot(){
+    const url = COPILOT_URLS[COPILOT_DEFAULT] || COPILOT_URLS.work;
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w){
+      setStatus("buildStatus", "Popup blocked: Copilot link opened in prompt window.");
+      openCopyModal("Copilot link:\n" + url + "\n\nIf you can open tabs, open this URL in a browser and paste the prompt.");
+    } else {
+      setStatus("buildStatus", "Copilot opened in a new tab. Paste the prompt there.");
+    }
+    return w;
+  }
+
 
   function nowLocal(){
     const d = new Date();
@@ -1302,14 +1328,20 @@ function buildCopilotPrompt(){
   }
 
   async function copyCopilotPrompt(){
+    // Open Copilot first (must be synchronous to avoid popup blockers)
+    const modeSel = document.getElementById("copilotMode");
+    if (modeSel && modeSel.value) COPILOT_DEFAULT = modeSel.value;
+    openCopilot();
+
     const prompt = buildCopilotPrompt();
     const ok = await tryCopyText(prompt);
     if (ok){
-      setStatus("buildStatus", "Copied: Copilot prompt (paste into Microsoft Copilot Chat).");
+      setStatus("buildStatus", "Copied: Copilot prompt. Switch to the Copilot tab and paste.");
     } else {
       setStatus("buildStatus", "Clipboard blocked: opened prompt window for manual copy.");
       openCopyModal(prompt);
     }
+  }
   }
 
 async function copyMeetingSummary(){
@@ -2085,6 +2117,14 @@ async function buildReport(){
   document.addEventListener("click", (e) => {
     if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
   });
+
+  // Expose key functions globally (required if the browser treats scripts as module-scoped)
+  try{
+    window.copyCopilotPrompt = copyCopilotPrompt;
+    window.openWxCharts = openWxCharts;
+    window.openCopilot = openCopilot;
+  } catch(e){}
+
 </script>
 
   <!-- Copy / Copilot prompt modal -->
