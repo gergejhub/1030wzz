@@ -621,7 +621,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>Wizz Network Weather & Delay Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.4-presenter-fixed</span></small>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.5-presenter+metar</span></small>
         </div>
       </div>
 
@@ -889,7 +889,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.4-presenter-fixed</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.5-presenter+metar</span></div>
 </main>
   </div>
 
@@ -903,6 +903,11 @@
   let STATION_MAP = new Map(); // ICAO -> {name,country,type}
   let PDF_TEXT = "";
   let PDF_SOURCE = "";
+  let LAST_MATCHED = [];
+  let LAST_SYNOPSIS = "";
+  let LAST_ENROUTE = "";
+  let LAST_READOUT = "";
+
   let PDF_LOADED_AT = null;
 
   const SAMPLE_ICAOS = [
@@ -1039,6 +1044,7 @@ function nowLocal(){
     const modal = document.getElementById("teleModal");
     if (!modal) return;
     stopTeleScroll();
+    stopSpeak();
     modal.setAttribute("aria-hidden", "true");
   }
 
@@ -1072,6 +1078,61 @@ function nowLocal(){
     const title = document.getElementById("rTitle") ? document.getElementById("rTitle").textContent : "Wizz Network Weather & Delay Brief";
     return `${title}\n\nNetwork disruption risk: ${lvl}\n${sub}\n\n${readout}`;
   }
+
+
+  // ===== Teleprompter speech (built-in Web Speech API) =====
+  let SPEAKING = false;
+  let SPEAK_UTT = null;
+
+  function canSpeak(){
+    return ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
+  }
+
+  function startSpeak(text){
+    try{
+      if (!canSpeak()){
+        setStatus("buildStatus", "Text-to-speech is not available in this browser.");
+        return;
+      }
+      stopSpeak();
+      const t = (text || "").trim();
+      if (!t){
+        setStatus("buildStatus", "Nothing to speak (build the report first).");
+        return;
+      }
+      SPEAK_UTT = new SpeechSynthesisUtterance(t);
+      SPEAK_UTT.rate = 1.0;
+      SPEAK_UTT.pitch = 1.0;
+      SPEAK_UTT.onend = () => { SPEAKING = false; };
+      SPEAK_UTT.onerror = () => { SPEAKING = false; };
+      SPEAKING = true;
+      window.speechSynthesis.speak(SPEAK_UTT);
+    } catch(e){
+      console.warn(e);
+      setStatus("buildStatus", "Speech failed (browser policy).");
+    }
+  }
+
+  function stopSpeak(){
+    try{
+      if (canSpeak()){
+        window.speechSynthesis.cancel();
+      }
+    } catch(e){}
+    SPEAKING = false;
+    SPEAK_UTT = null;
+  }
+
+  function teleEscapeHandler(e){
+    if (e.key === "Escape"){
+      const modal = document.getElementById("teleModal");
+      if (modal && modal.getAttribute("aria-hidden") === "false"){
+        closeTeleprompter();
+      }
+    }
+  }
+
+
 
   function todayUtcYmd(){
     const d = new Date();
@@ -2068,6 +2129,7 @@ async function buildReport(){
     // Map + management readout
     renderMap(top);
     const readout = buildReadout(matched, synopsis, enroute);
+    LAST_READOUT = readout || "";
     if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = readout;
     updateRiskBanner(reds, ambs, matched, synopsis);
 
@@ -2181,6 +2243,21 @@ async function buildReport(){
     $("debugBox").textContent = "Ready.";
   });
   if ($("btnBuild")) $("btnBuild").addEventListener("click", buildReport);
+  if ($("btnFetchMetar")) $("btnFetchMetar").addEventListener("click", fetchLiveMetars);
+  if ($("btnToggleMetarPaste")) $("btnToggleMetarPaste").addEventListener("click", () => {
+    const w = document.getElementById("metarPasteWrap");
+    if (w) w.style.display = (w.style.display === "none" || !w.style.display) ? "block" : "none";
+  });
+  if ($("btnUsePastedMetar")) $("btnUsePastedMetar").addEventListener("click", usePastedMetars);
+  if ($("btnClearMetar")) $("btnClearMetar").addEventListener("click", () => {
+    const ta = document.getElementById("metarPaste");
+    if (ta) ta.value = "";
+    const tb = document.getElementById("metarTbody");
+    if (tb) tb.innerHTML = '<tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>';
+    const st = document.getElementById("metarStatus");
+    if (st) st.textContent = "—";
+  });
+
   if ($("btnCopy")) $("btnCopy").addEventListener("click", copyMeetingSummary);
   if ($("btnCopilot")) $("btnCopilot").addEventListener("click", copyCopilotPrompt);
   // Modal (clipboard fallback) wiring
@@ -2208,6 +2285,9 @@ async function buildReport(){
     if (document.getElementById("btnTelePlay")) document.getElementById("btnTelePlay").addEventListener("click", startTeleScroll);
     if (document.getElementById("btnTelePause")) document.getElementById("btnTelePause").addEventListener("click", stopTeleScroll);
     if (document.getElementById("btnTeleFull")) document.getElementById("btnTeleFull").addEventListener("click", goFullscreen);
+    if (document.getElementById("btnTeleSpeak")) document.getElementById("btnTeleSpeak").addEventListener("click", () => { openTeleprompter(buildTeleprompterText()); startSpeak(buildTeleprompterText()); });
+    if (document.getElementById("btnTeleStopSpeak")) document.getElementById("btnTeleStopSpeak").addEventListener("click", stopSpeak);
+    document.addEventListener("keydown", teleEscapeHandler);
     if (document.getElementById("teleSpeed")) document.getElementById("teleSpeed").addEventListener("input", (e) => { TELE_SPEED = parseInt(e.target.value,10) || 55; });
     if (document.getElementById("teleFont")) document.getElementById("teleFont").addEventListener("input", (e) => {
       const v = parseInt(e.target.value,10) || 32;
@@ -2316,6 +2396,187 @@ async function buildReport(){
     };
   }
 
+
+
+
+  // ===== Live METAR cross-check =====
+  function getAffectedIcaosFromHotspots(){
+    const rows = Array.from(document.querySelectorAll("#hotBody tr"));
+    const icaos = [];
+    for (const tr of rows){
+      const tds = tr.querySelectorAll("td");
+      if (!tds || tds.length < 3) continue;
+      const txt = (tds[2].innerText || "").trim();
+      const icao = (txt.split(/\s+/)[0] || "").toUpperCase();
+      if (/^[A-Z]{4}$/.test(icao)) icaos.push(icao);
+    }
+    return Array.from(new Set(icaos));
+  }
+
+  function parseMetarLine(line){
+    const s = (line || "").trim();
+    const m = s.match(/^([A-Z]{4})\s+(.*)$/);
+    if (!m) return null;
+    const icao = m[1];
+    const rest = m[2];
+
+    const wind = (rest.match(/\b(?:VRB|\d{3})\d{2,3}(?:G\d{2,3})?KT\b/) || [])[0] || "—";
+
+    let vis = "—";
+    const visSM = rest.match(/\b(\d{1,2})SM\b/);
+    const visM = rest.match(/\b(9999|\d{4})\b/);
+    if (visSM) vis = visSM[0];
+    else if (visM) vis = visM[1];
+
+    const wxTokens = rest.match(/\b(\+|\-)?(TSRA|TS|RA|SN|SG|GR|GS|FZRA|FZDZ|DZ|SHRA|SHSN|SHGS|BR|FG|HZ)\b/g);
+    const wx = wxTokens ? Array.from(new Set(wxTokens)).join(" ") : "—";
+
+    let ceil = "—";
+    const ceilM = rest.match(/\b(VV|BKN|OVC)\d{3}\b/g);
+    if (ceilM && ceilM.length){
+      ceil = ceilM[0];
+    }
+
+    const time = (rest.match(/\b\d{6}Z\b/) || [])[0] || "—";
+
+    return { icao, time, wind, vis, wx, ceil, raw: s };
+  }
+
+  function metarConditionFlags(metar){
+    const raw = metar.raw || "";
+    let gust = 0;
+    const g = raw.match(/G(\d{2,3})KT/);
+    if (g) gust = parseInt(g[1],10) || 0;
+
+    let visM = null;
+    const vm = raw.match(/\b(9999|\d{4})\b/);
+    if (vm){
+      const v = vm[1] === "9999" ? 9999 : (parseInt(vm[1],10) || null);
+      visM = v;
+    }
+
+    const hasFG = /\bFG\b/.test(raw) || /\bFZFG\b/.test(raw);
+    const hasFZ = /\bFZRA\b/.test(raw) || /\bFZDZ\b/.test(raw);
+    const hasSN = /\bSN\b/.test(raw) || /\bSHSN\b/.test(raw);
+    const hasTS = /\bTS\b/.test(raw) || /\bTSRA\b/.test(raw);
+
+    return { gust, visM, hasFG, hasFZ, hasSN, hasTS };
+  }
+
+  function compareForecastToLive(drivers, metar){
+    const d = (drivers || "").toUpperCase();
+    const f = metarConditionFlags(metar);
+
+    const checks = [];
+    if (d.includes("LOW") && d.includes("VIS")){
+      if (f.visM !== null && f.visM <= 1500) checks.push({label:"Low vis confirmed", cls:"bad"});
+      else if (f.hasFG) checks.push({label:"Fog present", cls:"warn"});
+      else checks.push({label:"Low vis not observed", cls:"ok"});
+    }
+    if (d.includes("WIND")){
+      if (f.gust >= 35) checks.push({label:`Gusts ${f.gust}kt`, cls:"bad"});
+      else if (f.gust >= 25) checks.push({label:`Gusts ${f.gust}kt`, cls:"warn"});
+      else checks.push({label:"No strong gusts", cls:"ok"});
+    }
+    if (d.includes("CONVECT") || d.includes("TS")){
+      if (f.hasTS) checks.push({label:"TS observed", cls:"bad"});
+      else checks.push({label:"No TS in METAR", cls:"ok"});
+    }
+    if (d.includes("WINTER") || d.includes("SN") || d.includes("FZRA") || d.includes("ICE")){
+      if (f.hasFZ) checks.push({label:"Freezing precip", cls:"bad"});
+      else if (f.hasSN) checks.push({label:"Snow reported", cls:"warn"});
+      else checks.push({label:"No wintry precip", cls:"ok"});
+    }
+
+    if (!checks.length) return '<span class="badge ok">No rule</span>';
+    return checks.map(c => `<span class="badge ${c.cls}">${c.label}</span>`).join(" ");
+  }
+
+  function renderMetarTable(metarMap){
+    const tb = document.getElementById("metarTbody");
+    if (!tb) return;
+
+    const icaos = getAffectedIcaosFromHotspots();
+    if (!icaos.length){
+      tb.innerHTML = '<tr><td colspan="8" style="opacity:.7;">No affected airports in the current view.</td></tr>';
+      return;
+    }
+
+    const rows = [];
+    for (const icao of icaos){
+      const metar = metarMap[icao] || null;
+      const item = (LAST_MATCHED || []).find(x => x.icao === icao);
+      const drivers = item ? (item.drivers || "") : "";
+
+      if (!metar){
+        rows.push(`<tr>
+          <td class="mono">${icao}</td>
+          <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+          <td><span class="badge warn">No METAR</span></td>
+          <td class="mono" style="opacity:.7;">—</td>
+        </tr>`);
+        continue;
+      }
+
+      const cmp = compareForecastToLive(drivers, metar);
+      rows.push(`<tr>
+        <td class="mono">${icao}</td>
+        <td class="mono">${metar.time}</td>
+        <td class="mono">${metar.wind}</td>
+        <td class="mono">${metar.vis}</td>
+        <td class="mono">${metar.wx}</td>
+        <td class="mono">${metar.ceil}</td>
+        <td>${cmp}</td>
+        <td class="mono">${escapeHtml(metar.raw)}</td>
+      </tr>`);
+    }
+
+    tb.innerHTML = rows.join("") || '<tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>';
+  }
+
+  async function fetchLiveMetars(){
+    const icaos = getAffectedIcaosFromHotspots();
+    const st = document.getElementById("metarStatus");
+    if (st) st.textContent = "Fetching…";
+    if (!icaos.length){
+      if (st) st.textContent = "No affected airports to fetch.";
+      return;
+    }
+
+    const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${encodeURIComponent(icaos.join(","))}&format=raw`;
+
+    try{
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const txt = await r.text();
+      const lines = txt.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const map = {};
+      for (const line of lines){
+        const m = parseMetarLine(line);
+        if (m) map[m.icao] = m;
+      }
+      renderMetarTable(map);
+      if (st) st.textContent = `Loaded ${Object.keys(map).length} METAR(s) for ${icaos.length} affected airport(s).`;
+    } catch(e){
+      console.warn(e);
+      if (st) st.textContent = "Live METAR fetch failed (likely network/CORS). Use “Paste METARs instead”.";
+    }
+  }
+
+  function usePastedMetars(){
+    const ta = document.getElementById("metarPaste");
+    const st = document.getElementById("metarStatus");
+    const txt = ta ? ta.value : "";
+    const lines = txt.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const map = {};
+    for (const line of lines){
+      const m = parseMetarLine(line);
+      if (m) map[m.icao] = m;
+    }
+    renderMetarTable(map);
+    if (st) st.textContent = `Loaded ${Object.keys(map).length} METAR(s) from pasted text.`;
+  }
+
 </script>
 
   <!-- Copy / prompt modal (clipboard fallback) -->
@@ -2346,8 +2607,10 @@ async function buildReport(){
         <div class="teleMeta"><span id="teleMetaLeft">—</span> · <span id="teleMetaRight">—</span></div>
       </div>
       <div class="teleControls">
-        <button class="btn" id="btnTelePlay">Play</button>
+        <button class="btn" id="btnTelePlay">Scroll</button>
         <button class="btn" id="btnTelePause">Pause</button>
+        <button class="btn primary" id="btnTeleSpeak">Speak</button>
+        <button class="btn" id="btnTeleStopSpeak">Stop voice</button>
         <div class="teleSlider">
           <div class="teleLbl">Speed</div>
           <input id="teleSpeed" type="range" min="10" max="140" value="55" />
@@ -2366,4 +2629,48 @@ async function buildReport(){
   </div>
 
 </body>
-</html>
+</html
+      <div class="card" style="margin-top:12px;">
+        <h4>Live METAR cross-check (affected airports only)</h4>
+        <div class="hint">
+          Optional: pulls the latest METARs for the airports shown in “Affected Wizz airports”.
+          Source: aviationweather.gov (public). If your corporate network blocks it, use “Paste METARs”.
+        </div>
+
+        <div class="row" style="margin-top:10px; gap:10px; flex-wrap:wrap;">
+          <button class="btn" id="btnFetchMetar">Fetch live METARs</button>
+          <button class="btn" id="btnToggleMetarPaste">Paste METARs instead</button>
+          <div class="status" id="metarStatus" style="flex:1 1 auto;">—</div>
+        </div>
+
+        <div id="metarPasteWrap" style="display:none; margin-top:10px;">
+          <label>Paste raw METAR lines (one per line)</label>
+          <textarea id="metarPaste" style="width:100%; min-height:120px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:rgba(9,12,20,0.92); color:rgba(233,238,252,0.95); font-family:var(--mono); padding:12px;"></textarea>
+          <div class="row" style="margin-top:10px; gap:10px;">
+            <button class="btn primary" id="btnUsePastedMetar">Use pasted METARs</button>
+            <button class="btn" id="btnClearMetar">Clear</button>
+          </div>
+        </div>
+
+        <div class="table" style="margin-top:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th>ICAO</th>
+                <th>Observed</th>
+                <th>Wind</th>
+                <th>Vis</th>
+                <th>WX</th>
+                <th>Ceiling</th>
+                <th>Forecast vs live</th>
+                <th>Raw METAR</th>
+              </tr>
+            </thead>
+            <tbody id="metarTbody">
+              <tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+>
