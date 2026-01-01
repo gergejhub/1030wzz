@@ -380,31 +380,7 @@
       .raw{ background: #fafafa; color: #111; border: 1px solid #ddd; }
       .badge{ border: 1px solid #999; }
     }
-  
-  .modal{ position:fixed; inset:0; display:none; z-index:9999; }
-  .modal[aria-hidden="false"]{ display:block; }
-  .modalBackdrop{ position:absolute; inset:0; background:rgba(5,8,18,0.72); }
-  .modalCard{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:min(980px, calc(100vw - 32px)); max-height:calc(100vh - 32px);
-    background:rgba(15,18,28,0.98); border:1px solid rgba(255,255,255,0.12);
-    border-radius:16px; box-shadow:0 20px 80px rgba(0,0,0,.55);
-    padding:14px; display:flex; flex-direction:column; gap:10px;
-  }
-  .modalHead{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-  .modalTitle{ font-weight:900; letter-spacing:.2px; font-size:16px; }
-  .modalSub{ opacity:.8; font-size:12px; margin-top:2px; }
-  #copyModalText{
-    width:100%; min-height:340px; flex:1;
-    border-radius:12px; border:1px solid rgba(255,255,255,0.12);
-    background:rgba(9,12,20,0.92);
-    color:rgba(233,238,252,0.95);
-    font-family: var(--mono); font-size:12px; line-height:1.5;
-    padding:12px; resize:vertical;
-  }
-  .modalActions{ display:flex; gap:10px; justify-content:flex-end; }
-
-</style>
+  </style>
 
   <!-- Leaflet (map) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -419,35 +395,53 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>Wizz NOP Weather Brief</h1>
-          <small>Meeting mode — Executive Summary, Map, Readout, Top 10 | <span id="verTag">v15-meeting</span></small>
+          <small>Client-side parsing → English management report (DOCX/PPTX export)</small>
         </div>
       </div>
 
       <div class="section">
-        
-<h3>1) Wizz network inputs</h3>
-        <div class="hint">
-          Daily use: the app auto-loads <span style="font-family:var(--mono)">wizz_icaos.txt</span> from the repo root (GitHub Pages).
-          Advanced uploads are optional.
+        <h3>1) Wizz network inputs</h3>
+        <div class="hint">For daily use: the app auto-loads <span style="font-family:var(--mono)">wizz_icaos.txt</span> from the repo root. Manual upload is only a fallback.</div>
+
+        <label>Wizz-relevant stations (TXT, 1 ICAO per line)</label>
+        <input id="icaoFile" type="file" accept=".txt,text/plain" />
+        <div class="row" style="margin-top:10px;">
+          <button class="btn good" id="btnLoadIcao">Load ICAO list</button>
+          <button class="btn" id="btnUseSample">Use sample list</button>
+        </div>
+        <div class="status" id="icaoStatus">No ICAO list loaded.</div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" id="btnAutoLoad">Auto-load from repo (wizz_icaos.txt, wizz_station_map.*, wizz_core_bases.txt)</button>
         </div>
 
-        <div class="status" id="icaoStatus">Auto-load pending…</div>
-        <div class="status" id="mapStatus">Auto-load pending…</div>
-        <div class="status" id="baseStatus">Auto-load pending…</div>
 
-        <details style="margin-top:12px;">
-          <summary style="cursor:pointer; font-weight:900; opacity:.9;">Advanced (optional)</summary>
+        <label style="margin-top:12px;">Optional: station names (CSV or JSON)</label>
+        <div class="hint">
+          CSV format: <span style="font-family:var(--mono)">ICAO,Name,Country,Type,Lat,Lon</span> (Type optional; Lat/Lon optional).<br/>
+          JSON format: [{ "icao":"LHBP","name":"Budapest","country":"HU","type":"BASE","lat":47.439,"lon":19.261 }, ...]
+        </div>
+        <input id="mapFile" type="file" accept=".csv,application/json,text/plain" />
+        <div class="row" style="margin-top:10px;">
+          <button class="btn good" id="btnLoadMap">Load station mapping</button>
+          <button class="btn" id="btnClearMap">Clear mapping</button>
+        </div>
+        <div class="status" id="mapStatus">No mapping loaded (ICAO-only display).</div>
 
-          <label style="margin-top:12px;">Upload Wizz ICAO list (TXT, 1 ICAO per line)</label>
-          <input id="icaoFile" type="file" accept=".txt,text/plain" />
+        <label style="margin-top:12px;">Optional: core bases list (TXT, 1 ICAO per line)</label>
+        <input id="baseFile" type="file" accept=".txt,text/plain" />
+        <div class="row" style="margin-top:10px;">
+          <button class="btn good" id="btnLoadBases">Load bases</button>
+          <button class="btn" id="btnUseBaseSample">Use sample bases</button>
+        </div>
+        <div class="status" id="baseStatus">No base list loaded.</div>
 
-          <label style="margin-top:12px;">Optional: custom airport names (CSV or JSON)</label>
-          <input id="mapFile" type="file" accept=".csv,.json,text/csv,application/json" />
+        <div class="hint" style="margin-top:8px;">
+          Tip: Put <span style="font-family:var(--mono)">wizz_icaos.txt</span> + optional mapping files in your GitHub repo and load them here daily.
+        </div>
+      </div>
 
-          <label style="margin-top:12px;">Optional: core bases list (TXT, 1 ICAO per line)</label>
-          <input id="baseFile" type="file" accept=".txt,text/plain" />
-        </details>
-<h3>2) NOP PDF input</h3>
+      <div class="section">
+        <h3>2) NOP PDF input</h3>
         <label>Upload the daily NOP PDF</label>
         <div class="hint">Only PDF upload is supported (URL fetch is disabled due to cross-origin restrictions).</div>
         <label style="margin-top:12px;">Or upload PDF (recommended)</label>
@@ -464,41 +458,37 @@
       </div>
 
       <div class="section">
-        
-<h3>3) Report generation</h3>
-        <div class="hint">Meeting mode: concise output for non-technical stakeholders.</div>
+        <h3>3) Report generation & export</h3>
 
-        <label>Threshold</label>
-        <select id="thr" class="select">
-          <option value="GREEN" selected>Include GREEN/AMBER/RED (broad)</option>
-          <option value="AMBER">Include AMBER/RED (focused)</option>
-          <option value="RED">RED only (critical)</option>
+        <label>Minimum score threshold</label>
+        <select id="minScore">
+          <option value="0" selected>0 (include all)</option>
+          <option value="3">3 (reduce noise)</option>
+          <option value="5">5 (medium+ only)</option>
+          <option value="7">7 (RED only)</option>
         </select>
 
-        <label style="margin-top:12px;">Top airports to display</label>
-        <input id="maxHot" type="number" min="5" max="30" step="1" value="10" />
+        <label style="margin-top:10px;">Max hotspots</label>
+        <select id="maxHot">
+          <option value="10">10</option>
+          <option value="15" selected>15</option>
+          <option value="20">20</option>
+        </select>
 
-        <div class="row" style="margin-top:12px; gap:10px;">
-          <button class="btn primary" id="btnBuild">Build meeting brief</button>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn good" id="btnBuild">Build report</button>
+          <button class="btn warn" id="btnCopy">Copy meeting summary</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" id="btnPrint">Print / Save as PDF</button>
+          <button class="btn" id="btnDocx">Export DOCX</button>
+          <button class="btn" id="btnPptx">Export PPTX (1 slide)</button>
         </div>
 
-        <div class="row" style="margin-top:10px; gap:10px;">
-          <button class="btn" id="btnCopySummary">Copy meeting summary</button>
-          <button class="btn" id="btnCopilot">Copy Copilot prompt</button>
-        </div>
+        <div class="status" id="buildStatus">Ready. (JS loading…)</div>
 
-        <details style="margin-top:12px;">
-          <summary style="cursor:pointer; font-weight:900; opacity:.9;">Export (optional)</summary>
-          <div class="row" style="margin-top:10px; gap:10px; flex-wrap:wrap;">
-            <button class="btn" id="btnDocx">Export DOCX</button>
-            <button class="btn" id="btnPptx">Export PPTX</button>
-          </div>
-        </details>
-
-        <div class="hint" style="margin-top:10px;">
-          If clipboard is blocked, the app will open a copy window for manual copy (Ctrl+C).
-        </div>
-<h3>Severity legend</h3>
+        <div class="section" style="margin-top:12px;">
+          <h3>Severity legend</h3>
           <div class="row">
             <span class="pill"><span class="dot bad"></span>RED (high disruption)</span>
             <span class="pill"><span class="dot warn"></span>AMBER (medium)</span>
@@ -615,33 +605,32 @@
           </div>
         </div>
 
+<div class="card" style="margin-top:12px;">
+          <h4>Airspace / en-route notes (extracted)</h4>
+          <div class="raw" id="enrouteBox">—</div>
+        </div>
 
-        <details style="margin-top:12px;">
-          <summary style="cursor:pointer; font-weight:900; opacity:.9;">Source text (optional)</summary>
-          <div class="grid2" style="margin-top:12px;">
-            <div class="card">
-              <h4>Weather synopsis (source)</h4>
-              <div class="raw" id="synopsisBox">—</div>
-            </div>
-            <div class="card">
-              <h4>Airspace / en-route notes (source)</h4>
-              <div class="raw" id="enrouteBox">—</div>
-            </div>
-          </div>
-        </details>
-</div>
+        <div class="card" style="margin-top:12px;">
+          <h4>Weather synopsis (extracted)</h4>
+          <div class="raw" id="synopsisBox">—</div>
+        </div>
 
         
-        <div style="display:none;"><div class="raw" id="airportsOverviewBox">—</div></div>
+        <div class="card" style="margin-top:12px;">
+          <h4>Raw 'Airports Overview' section (extracted)</h4>
+          <div class="raw" id="airportsOverviewBox">—</div>
+        </div>
 
-<div style="display:none;"><div class="raw" id="debugBox">—</div></div>
+<div class="card" style="margin-top:12px;">
+          <h4>Parsing diagnostics</h4>
+          <div class="raw" id="debugBox">Ready.</div>
+        </div>
 
         <div class="footerNote">
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.65; font-size:12px; padding:10px 4px;">Version: <span id="verFooter">v15-meeting</span></div>
-</main>
+    </main>
   </div>
 
 <script>
@@ -665,44 +654,7 @@
   // Helpers
   const $ = (id) => document.getElementById(id);
 
-  
-
-  async function tryCopyText(text){
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      try{ await navigator.clipboard.writeText(text); return true; } catch(e){}
-    }
-    try{
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly","readonly");
-      ta.style.position = "fixed";
-      ta.style.top = "-9999px";
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return !!ok;
-    } catch(e){
-      return false;
-    }
-  }
-
-  function openCopyModal(text){
-    const modal = $("copyModal");
-    const ta = $("copyModalText");
-    if (!modal || !ta) return;
-    ta.value = text;
-    modal.setAttribute("aria-hidden","false");
-    setTimeout(() => { ta.focus(); ta.select(); }, 50);
-  }
-
-  function closeCopyModal(){
-    const modal = $("copyModal");
-    if (!modal) return;
-    modal.setAttribute("aria-hidden","true");
-  }
-function nowLocal(){
+  function nowLocal(){
     const d = new Date();
     const pad = (n) => String(n).padStart(2,"0");
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -1170,39 +1122,40 @@ function scoreAndTag(item){
 
   async function copyCopilotPrompt(){
     const prompt = buildCopilotPrompt();
-    const ok = await tryCopyText(prompt);
-    if (ok){
-      setStatus("buildStatus", "Copied: Copilot prompt (paste into Copilot).");
-    } else {
-      setStatus("buildStatus", "Clipboard blocked: opened copy window for manual copy.");
-      openCopyModal(prompt);
-    }
+    await navigator.clipboard.writeText(prompt);
+    setStatus("buildStatus", "Copied: Copilot prompt (paste into Microsoft Copilot Chat).");
   }
 
 async function copyMeetingSummary(){
-    const rows = Array.from(document.querySelectorAll("#hotspotsTbody tr")).map(tr => {
+    const execLis = Array.from($("execBullets").querySelectorAll("li")).map(li => "- " + li.innerText);
+    const topRows = Array.from($("hotBody").querySelectorAll("tr")).slice(0, 10).map(tr => {
       const tds = tr.querySelectorAll("td");
       if (tds.length < 8) return null;
-      const sev = tds[0].innerText.trim();
-      const risk = tds[1].innerText.trim();
-      const icao = tds[2].innerText.trim().split(/\s+/)[0];
+      const sev = tds[0].innerText.split("\n")[0].trim();
+      const risk = tds[1].innerText.split("\n")[0].trim();
+      const icao = tds[2].innerText.trim();
       const station = tds[3].innerText.trim();
       const time = tds[4].innerText.trim();
       const drivers = tds[5].innerText.trim();
       const plain = tds[6].innerText.trim();
-      return `- ${icao} (${station}) | ${sev}/${risk} | ${time} | ${plain} | ${drivers}`;
+      const snip = tds[7].innerText.trim();
+      return `- ${icao} | ${sev}/${risk} | ${time} | ${drivers} | ${station} | ${plain} | ${snip}`;
     }).filter(Boolean);
 
-    const header = `Wizz network weather/delay brief (${PDF_LOADED_AT || "—"})`;
-    const summary = `${header}\n\nAffected airports (Top ${Math.min(rows.length, 10)}):\n${rows.slice(0,10).join("\n") || "—"}\n`;
+    const text = [
+      $("rTitle").textContent,
+      `Generated: ${$("rGenerated").textContent}`,
+      `Source: ${PDF_SOURCE || "—"}`,
+      "",
+      "Executive summary:",
+      ...execLis,
+      "",
+      "Top hotspots:",
+      ...(topRows.length ? topRows : ["- (no data)"]),
+    ].join("\n");
 
-    const ok = await tryCopyText(summary);
-    if (ok){
-      setStatus("buildStatus", "Copied: meeting summary.");
-    } else {
-      setStatus("buildStatus", "Clipboard blocked: opened copy window for manual copy.");
-      openCopyModal(summary);
-    }
+    await navigator.clipboard.writeText(text);
+    setStatus("buildStatus", "Meeting summary copied to clipboard.");
   }
 
   // Export DOCX
@@ -1717,13 +1670,13 @@ async function buildReport(){
   }
 
   // UI events
-  if ($("btnUseSample")) $("btnUseSample").addEventListener("click", () => {
+  $("btnUseSample").addEventListener("click", () => {
     WIZZ_ICAOS = new Set(SAMPLE_ICAOS);
     setStatus("icaoStatus", `Loaded sample: ${WIZZ_ICAOS.size} ICAO codes`);
     $("rStations").textContent = String(WIZZ_ICAOS.size);
   });
 
-  if ($("btnLoadIcao")) $("btnLoadIcao").addEventListener("click", async () => {
+  $("btnLoadIcao").addEventListener("click", async () => {
     const f = $("icaoFile").files[0];
     if (!f){ setStatus("icaoStatus", "No TXT selected."); return; }
     const text = await readFileText(f);
@@ -1733,12 +1686,12 @@ async function buildReport(){
     $("rStations").textContent = String(WIZZ_ICAOS.size);
   });
 
-  if ($("btnUseBaseSample")) $("btnUseBaseSample").addEventListener("click", () => {
+  $("btnUseBaseSample").addEventListener("click", () => {
     CORE_BASES = new Set(SAMPLE_BASES);
     setStatus("baseStatus", `Loaded sample bases: ${CORE_BASES.size}`);
   });
 
-  if ($("btnLoadBases")) $("btnLoadBases").addEventListener("click", async () => {
+  $("btnLoadBases").addEventListener("click", async () => {
     const f = $("baseFile").files[0];
     if (!f){ setStatus("baseStatus", "No TXT selected."); return; }
     const text = await readFileText(f);
@@ -1747,13 +1700,13 @@ async function buildReport(){
     setStatus("baseStatus", `Loaded bases: ${CORE_BASES.size}`);
   });
 
-  if ($("btnClearMap")) $("btnClearMap").addEventListener("click", () => {
+  $("btnClearMap").addEventListener("click", () => {
     STATION_MAP.clear();
     setStatus("mapStatus", "Mapping cleared.");
     $("rMapping").textContent = "none";
   });
 
-  if ($("btnLoadMap")) $("btnLoadMap").addEventListener("click", async () => {
+  $("btnLoadMap").addEventListener("click", async () => {
     const f = $("mapFile").files[0];
     if (!f){ setStatus("mapStatus", "No mapping file selected."); return; }
     const name = (f.name || "").toLowerCase();
@@ -1783,7 +1736,7 @@ async function buildReport(){
     }
   });
 
-    if ($("btnLoadPdfFile")) $("btnLoadPdfFile").addEventListener("click", async () => {
+    $("btnLoadPdfFile").addEventListener("click", async () => {
     const f = $("pdfFile").files[0];
     if (!f){ setStatus("pdfStatus", "No PDF selected."); return; }
     setStatus("pdfStatus", "Parsing PDF…");
@@ -1799,7 +1752,7 @@ async function buildReport(){
     }
   });
 
-  if ($("btnClearPdf")) $("btnClearPdf").addEventListener("click", () => {
+  $("btnClearPdf").addEventListener("click", () => {
     PDF_TEXT = ""; PDF_SOURCE = ""; PDF_LOADED_AT = null;
     setStatus("pdfStatus", "No PDF loaded.");
     $("synopsisBox").textContent = "—";
@@ -1807,17 +1760,17 @@ async function buildReport(){
     $("debugBox").textContent = "Ready.";
   });
 
-    if ($("btnBuild")) $("btnBuild").addEventListener("click", buildReport);
-  if ($("btnCopy")) $("btnCopy").addEventListener("click", copyMeetingSummary);
-  if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
-  if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
-  if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
-  if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
+    $("btnBuild").addEventListener("click", buildReport);
+  $("btnCopy").addEventListener("click", copyMeetingSummary);
+  $("btnPrint").addEventListener("click", () => window.print());
+  $("btnDocx").addEventListener("click", exportDocx);
+  $("btnPptx").addEventListener("click", exportPptx);
+  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
 
   // Auto-load repo files on startup (best-effort)
   (async () => { try { await autoLoadFromRepo(); } catch(e){} })();
 
-  if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
+  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
 
   // Auto-run if query params request it
   (async () => {
@@ -1914,25 +1867,5 @@ async function buildReport(){
   }
 
 </script>
-
-  <!-- Copy / prompt modal (clipboard fallback) -->
-  <div id="copyModal" class="modal" aria-hidden="true">
-    <div class="modalBackdrop" id="copyModalBackdrop"></div>
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="copyModalTitle">
-      <div class="modalHead">
-        <div>
-          <div id="copyModalTitle" class="modalTitle">Copy window</div>
-          <div class="modalSub">If clipboard is blocked, select all and press Ctrl+C.</div>
-        </div>
-        <button class="btn" id="btnCloseModal">Close</button>
-      </div>
-      <textarea id="copyModalText" spellcheck="false"></textarea>
-      <div class="modalActions">
-        <button class="btn primary" id="btnCopyModal">Copy to clipboard</button>
-        <button class="btn" id="btnSelectAll">Select all</button>
-      </div>
-    </div>
-  </div>
-
 </body>
 </html>
