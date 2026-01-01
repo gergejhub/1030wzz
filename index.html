@@ -419,7 +419,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>Wizz NOP Weather Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.1</span></small>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.2</span></small>
         </div>
       </div>
 
@@ -654,7 +654,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.1</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.2</span></div>
 </main>
   </div>
 
@@ -1826,24 +1826,32 @@ async function buildReport(){
     $("enrouteBox").textContent = "—";
     $("debugBox").textContent = "Ready.";
   });
-
-    $("btnBuild").addEventListener("click", buildReport);
-  $("btnCopy").addEventListener("click", copyMeetingSummary);
-  $("btnCopilot").addEventListener("click", copyCopilotPrompt);
+  if ($("btnBuild")) $("btnBuild").addEventListener("click", buildReport);
+  if ($("btnCopy")) $("btnCopy").addEventListener("click", copyMeetingSummary);
+  if ($("btnCopilot")) $("btnCopilot").addEventListener("click", copyCopilotPrompt);
   // Modal (clipboard fallback) wiring
-  $("btnCloseModal").addEventListener("click", closeCopyModal);
-  $("copyModalBackdrop").addEventListener("click", closeCopyModal);
-  $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
-  $("btnCopyModal").addEventListener("click", async () => { const t=$("copyModalText"); const ok = await tryCopyText(t ? t.value : ""); setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C."); });
-  $("btnPrint").addEventListener("click", () => window.print());
-  $("btnDocx").addEventListener("click", exportDocx);
-  $("btnPptx").addEventListener("click", exportPptx);
-  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
-
+  if ($("btnCloseModal")) $("btnCloseModal").addEventListener("click", closeCopyModal);
+  if ($("copyModalBackdrop")) $("copyModalBackdrop").addEventListener("click", closeCopyModal);
+  if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
+  if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => { const t=$("copyModalText"); const ok = await tryCopyText(t ? t.value : ""); setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C."); });
+  if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
+  if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
+  if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
+  if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
   // Auto-load repo files on startup (best-effort)
   (async () => { try { await autoLoadFromRepo(); } catch(e){} })();
 
-  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
+  // Ensure modal controls are wired after DOM is fully parsed
+  window.addEventListener("DOMContentLoaded", () => {
+    if ($("btnCloseModal")) $("btnCloseModal").addEventListener("click", closeCopyModal);
+    if ($("copyModalBackdrop")) $("copyModalBackdrop").addEventListener("click", closeCopyModal);
+    if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
+    if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
+      const t=$("copyModalText");
+      const ok = await tryCopyText(t ? t.value : "");
+      setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C.");
+    });
+  });
 
   // Auto-run if query params request it
   (async () => {
