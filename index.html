@@ -404,6 +404,146 @@
   }
   .modalActions{ display:flex; gap:10px; justify-content:flex-end; }
 
+
+
+  /* ===== Modern meeting-wall UX (v8.3) ===== */
+  :root{
+    --bg0:#070A14;
+    --bg1:#0D1226;
+    --card: rgba(18, 24, 44, 0.82);
+    --card2: rgba(13, 18, 34, 0.72);
+    --stroke: rgba(255,255,255,0.10);
+    --stroke2: rgba(255,255,255,0.14);
+    --text: rgba(233,238,252,0.92);
+    --muted: rgba(233,238,252,0.66);
+    --shadow: 0 18px 60px rgba(0,0,0,0.45);
+  }
+
+  body{
+    background: radial-gradient(1200px 800px at 15% 10%, rgba(106, 90, 255, 0.18), transparent 55%),
+                radial-gradient(1200px 800px at 85% 20%, rgba(255, 64, 129, 0.14), transparent 60%),
+                linear-gradient(180deg, var(--bg0), var(--bg1));
+    color: var(--text);
+  }
+
+  .brand{
+    border:1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(20,26,48,0.78), rgba(12,16,32,0.62));
+    box-shadow: var(--shadow);
+    border-radius: 18px;
+  }
+
+  .card{
+    background: linear-gradient(180deg, var(--card), var(--card2));
+    border: 1px solid var(--stroke);
+    box-shadow: var(--shadow);
+    border-radius: 18px;
+  }
+
+  .section{
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(18,24,44,0.55), rgba(13,18,34,0.35));
+  }
+
+  h4{
+    letter-spacing: .2px;
+  }
+
+  .kpis{
+    gap: 14px;
+  }
+  .kpi{
+    border: 1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(15,20,36,0.62), rgba(10,14,26,0.42));
+    border-radius: 16px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  }
+  .kpi .k{
+    color: var(--muted);
+    font-weight: 900;
+    letter-spacing: .25px;
+  }
+  .kpi .v{
+    font-size: 36px;
+    font-weight: 950;
+    letter-spacing: .3px;
+  }
+  .kpi .s{
+    color: rgba(233,238,252,0.58);
+  }
+
+  .table{
+    border-radius: 16px;
+    overflow: hidden;
+    border:1px solid var(--stroke);
+  }
+  .table th{
+    background: rgba(8,12,22,0.65);
+    color: rgba(233,238,252,0.78);
+    letter-spacing: .2px;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+  .table td{
+    background: rgba(14,18,34,0.40);
+  }
+  .table tr:hover td{
+    background: rgba(106, 90, 255, 0.10);
+  }
+
+  .callout{
+    margin-top: 12px;
+    border-radius: 18px;
+    padding: 14px 14px;
+    border:1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(106, 90, 255, 0.10), rgba(255, 64, 129, 0.06));
+  }
+  .calloutTitle{
+    font-weight: 950;
+    letter-spacing: .2px;
+  }
+  .calloutBody{
+    margin-top: 8px;
+    color: rgba(233,238,252,0.86);
+    line-height: 1.45;
+  }
+  .pillRow{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 950;
+    border:1px solid var(--stroke2);
+    background: rgba(9,12,22,0.55);
+    letter-spacing:.2px;
+  }
+  .pill.red{ color: rgba(255,120,120,0.95); }
+  .pill.amber{ color: rgba(255,206,120,0.95); }
+  .pill.green{ color: rgba(140,255,190,0.95); }
+
+  .btn.primary{
+    box-shadow: 0 14px 40px rgba(106, 90, 255, 0.24);
+  }
+
+  .footerVersion{
+    opacity:.65;
+    font-size:12px;
+    padding:10px 4px;
+  }
+
+  /* Make the map visually stronger on big screens */
+  #map{
+    border-radius: 18px !important;
+    border:1px solid var(--stroke) !important;
+    box-shadow: var(--shadow) !important;
+  }
 </style>
 
   <!-- Leaflet (map) -->
@@ -418,8 +558,8 @@
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
         <div>
-          <h1>Wizz NOP Weather Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.2</span></small>
+          <h1>Wizz Network Weather & Delay Brief</h1>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.3-modern</span></small>
         </div>
       </div>
 
@@ -565,10 +705,24 @@
             <div class="s">Winter / Wind / Convective / Low-vis</div>
           </div>
         </div>
+        <div class="callout">
+          <div class="calloutTitle">How to read this (for non-technical stakeholders)</div>
+          <div class="calloutBody">
+            <div class="pillRow">
+              <span class="pill red">RED</span> High likelihood of disruption/delays (e.g., strong winds, storms, freezing fog, very low visibility).
+              <span class="pill amber">AMBER</span> Medium likelihood (operational constraints possible).
+              <span class="pill green">GREEN</span> Minor or localized impact.
+            </div>
+            <div style="margin-top:10px; opacity:.92;">
+              “Plain-language” translates aviation shorthand into meeting-ready statements. Use “Raw text” only if you need the exact NOP wording.
+            </div>
+          </div>
+        </div>
+
 
         <div class="grid2">
           <div class="card">
-            <h4>Executive summary</h4>
+            <h4>Executive summary (30–60s readout)</h4>
             <ul class="bullets" id="execBullets">
               <li>Load your ICAO list and the daily NOP PDF, then build the report.</li>
               <li>If URL fetch fails due to CORS, use file upload.</li>
@@ -654,7 +808,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.2</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.3-modern</span></div>
 </main>
   </div>
 
