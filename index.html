@@ -406,7 +406,7 @@
 
 
 
-  /* ===== Modern + Presenter UX (v8.4) ===== */
+  /* ===== Modern meeting-wall UX (v8.3) ===== */
   :root{
     --bg0:#070A14;
     --bg1:#0D1226;
@@ -416,7 +416,7 @@
     --stroke2: rgba(255,255,255,0.14);
     --text: rgba(233,238,252,0.92);
     --muted: rgba(233,238,252,0.66);
-    --shadow2: 0 18px 60px rgba(0,0,0,0.45);
+    --shadow: 0 18px 60px rgba(0,0,0,0.45);
   }
 
   body{
@@ -425,13 +425,72 @@
                 linear-gradient(180deg, var(--bg0), var(--bg1));
     color: var(--text);
   }
-  .brand{ box-shadow: var(--shadow2); border-radius: 18px; }
-  .card{ background: linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--stroke); box-shadow: var(--shadow2); border-radius: 18px; }
-  .section{ border: 1px solid var(--stroke); border-radius: 18px; background: linear-gradient(180deg, rgba(18,24,44,0.55), rgba(13,18,34,0.35)); }
-  .table{ border-radius: 16px; overflow: hidden; border:1px solid var(--stroke); }
-  .table th{ background: rgba(8,12,22,0.65); color: rgba(233,238,252,0.78); letter-spacing: .2px; text-transform: uppercase; font-size: 12px; }
-  .table td{ background: rgba(14,18,34,0.40); }
-  .table tr:hover td{ background: rgba(106, 90, 255, 0.10); }
+
+  .brand{
+    border:1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(20,26,48,0.78), rgba(12,16,32,0.62));
+    box-shadow: var(--shadow);
+    border-radius: 18px;
+  }
+
+  .card{
+    background: linear-gradient(180deg, var(--card), var(--card2));
+    border: 1px solid var(--stroke);
+    box-shadow: var(--shadow);
+    border-radius: 18px;
+  }
+
+  .section{
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(18,24,44,0.55), rgba(13,18,34,0.35));
+  }
+
+  h4{
+    letter-spacing: .2px;
+  }
+
+  .kpis{
+    gap: 14px;
+  }
+  .kpi{
+    border: 1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(15,20,36,0.62), rgba(10,14,26,0.42));
+    border-radius: 16px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  }
+  .kpi .k{
+    color: var(--muted);
+    font-weight: 900;
+    letter-spacing: .25px;
+  }
+  .kpi .v{
+    font-size: 36px;
+    font-weight: 950;
+    letter-spacing: .3px;
+  }
+  .kpi .s{
+    color: rgba(233,238,252,0.58);
+  }
+
+  .table{
+    border-radius: 16px;
+    overflow: hidden;
+    border:1px solid var(--stroke);
+  }
+  .table th{
+    background: rgba(8,12,22,0.65);
+    color: rgba(233,238,252,0.78);
+    letter-spacing: .2px;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+  .table td{
+    background: rgba(14,18,34,0.40);
+  }
+  .table tr:hover td{
+    background: rgba(106, 90, 255, 0.10);
+  }
 
   .callout{
     margin-top: 12px;
@@ -440,13 +499,28 @@
     border:1px solid var(--stroke);
     background: linear-gradient(180deg, rgba(106, 90, 255, 0.10), rgba(255, 64, 129, 0.06));
   }
-  .calloutTitle{ font-weight: 950; letter-spacing: .2px; }
-  .calloutBody{ margin-top: 8px; color: rgba(233,238,252,0.86); line-height: 1.45; }
-  .pillRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .calloutTitle{
+    font-weight: 950;
+    letter-spacing: .2px;
+  }
+  .calloutBody{
+    margin-top: 8px;
+    color: rgba(233,238,252,0.86);
+    line-height: 1.45;
+  }
+  .pillRow{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
   .pill{
-    display:inline-flex; align-items:center;
-    padding: 4px 10px; border-radius: 999px;
-    font-weight: 950; border:1px solid var(--stroke2);
+    display:inline-flex;
+    align-items:center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 950;
+    border:1px solid var(--stroke2);
     background: rgba(9,12,22,0.55);
     letter-spacing:.2px;
   }
@@ -454,14 +528,33 @@
   .pill.amber{ color: rgba(255,206,120,0.95); }
   .pill.green{ color: rgba(140,255,190,0.95); }
 
+  .btn.primary{
+    box-shadow: 0 14px 40px rgba(106, 90, 255, 0.24);
+  }
+
+  .footerVersion{
+    opacity:.65;
+    font-size:12px;
+    padding:10px 4px;
+  }
+
+  /* Make the map visually stronger on big screens */
+  #map{
+    border-radius: 18px !important;
+    border:1px solid var(--stroke) !important;
+    box-shadow: var(--shadow) !important;
+  }
+
+
+  /* ===== Presenter UX (v8.4) ===== */
   .riskBanner{
     display:flex; align-items:center; justify-content:space-between;
     gap: 12px;
     padding: 12px 14px;
     border-radius: 18px;
-    border: 1px solid var(--stroke);
+    border: 1px solid rgba(255,255,255,0.10);
     background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(12,16,32,0.30));
-    box-shadow: var(--shadow2);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
     margin-bottom: 12px;
   }
   .riskLeft{ display:flex; align-items:center; gap: 12px; }
@@ -475,12 +568,10 @@
   .riskLights .light.amber{ background: rgba(255,190,70,0.85); }
   .riskLights .light.green{ background: rgba(120,255,170,0.85); }
   .riskLights .on{ opacity: 1; box-shadow: 0 0 22px rgba(255,255,255,0.18); }
-
   .riskTitle{ font-weight: 950; letter-spacing: .2px; font-size: 16px; }
   .riskSub{ color: rgba(233,238,252,0.78); font-weight: 750; margin-top: 2px; }
   .riskRight{ display:flex; gap: 10px; flex-wrap:wrap; }
 
-  /* Presenter mode: hide sidebar, enlarge key elements */
   body.presenter .app{ grid-template-columns: 1fr; }
   body.presenter .panel{ display:none; }
   body.presenter .report{ padding: 18px 22px; }
@@ -490,7 +581,6 @@
   body.presenter .table td{ font-size: 14px; }
   body.presenter .riskTitle{ font-size: 18px; }
 
-  /* Teleprompter overlay */
   .teleModal{ position:fixed; inset:0; display:none; z-index:99999; background: rgba(6,9,18,0.92); }
   .teleModal[aria-hidden="false"]{ display:flex; flex-direction:column; }
   .teleTop{
@@ -505,15 +595,12 @@
   .teleSlider{ display:flex; align-items:center; gap: 8px; }
   .teleLbl{ font-size: 12px; opacity: .8; font-weight: 850; }
   #teleSpeed, #teleFont{ width: 140px; }
-  .teleBody{
-    flex:1; overflow:auto;
-    padding: 18px 22px;
-  }
+  .teleBody{ flex:1; overflow:auto; padding: 18px 22px; }
   #teleText{
     white-space: pre-wrap;
     font-family: var(--sans);
     font-weight: 800;
-    font-size: 30px;
+    font-size: 32px;
     line-height: 1.55;
     color: rgba(233,238,252,0.95);
     max-width: 1100px;
@@ -533,8 +620,8 @@
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
         <div>
-          <h1>Wizz NOP Weather Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.4-presenter</span></small>
+          <h1>Wizz Network Weather & Delay Brief</h1>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.4-presenter-fixed</span></small>
         </div>
       </div>
 
@@ -716,7 +803,7 @@
 
         <div class="grid2">
           <div class="card">
-            <h4>Executive summary</h4>
+            <h4>Executive summary (30–60s readout)</h4>
             <ul class="bullets" id="execBullets">
               <li>Load your ICAO list and the daily NOP PDF, then build the report.</li>
               <li>If URL fetch fails due to CORS, use file upload.</li>
@@ -802,7 +889,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.4-presenter</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.4-presenter-fixed</span></div>
 </main>
   </div>
 
@@ -867,7 +954,8 @@
 function nowLocal(){
     const d = new Date();
     const pad = (n) => String(n).padStart(2,"0");
-    return `${d.getFullYear()}
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
 
   // ===== Presenter / Teleprompter =====
   function togglePresenterMode(){
@@ -924,7 +1012,6 @@ function nowLocal(){
     if (levelEl) levelEl.textContent = risk.level;
     if (subEl) subEl.textContent = `${drivers}. Focus: ${top3 || "—"}. ${synopsis ? "Synopsis: " + synopsis : ""}`;
     setRiskLights(risk.light);
-
     banner.style.display = "flex";
   }
 
@@ -942,8 +1029,6 @@ function nowLocal(){
     pre.textContent = text || "—";
     body.scrollTop = 0;
     modal.setAttribute("aria-hidden", "false");
-
-    // meta
     const left = document.getElementById("teleMetaLeft");
     const right = document.getElementById("teleMetaRight");
     if (left) left.textContent = `Source: ${PDF_SOURCE || "—"}`;
@@ -979,8 +1064,15 @@ function nowLocal(){
     TELE_LAST = 0;
     if (TELE_RAF){ cancelAnimationFrame(TELE_RAF); TELE_RAF = null; }
   }
--${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  function buildTeleprompterText(){
+    const lvl = document.getElementById("riskLevel") ? document.getElementById("riskLevel").textContent : "—";
+    const sub = document.getElementById("riskSub") ? document.getElementById("riskSub").textContent : "";
+    const readout = document.getElementById("readoutBox") ? document.getElementById("readoutBox").textContent : "";
+    const title = document.getElementById("rTitle") ? document.getElementById("rTitle").textContent : "Wizz Network Weather & Delay Brief";
+    return `${title}\n\nNetwork disruption risk: ${lvl}\n${sub}\n\n${readout}`;
   }
+
   function todayUtcYmd(){
     const d = new Date();
     const y = d.getUTCFullYear();
@@ -1980,7 +2072,6 @@ async function buildReport(){
     updateRiskBanner(reds, ambs, matched, synopsis);
 
 
-
     // Diagnostics
     const dbg = [
       `PDF loaded: ${PDF_LOADED_AT || "—"}`,
@@ -2100,14 +2191,7 @@ async function buildReport(){
   if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
   if ($("btnPresenter")) $("btnPresenter").addEventListener("click", togglePresenterMode);
   if ($("btnFull")) $("btnFull").addEventListener("click", goFullscreen);
-  if ($("btnTele")) $("btnTele").addEventListener("click", () => {
-    const t = document.getElementById("readoutBox") ? document.getElementById("readoutBox").textContent : "";
-    const lvl = document.getElementById("riskLevel") ? document.getElementById("riskLevel").textContent : "—";
-    const sub = document.getElementById("riskSub") ? document.getElementById("riskSub").textContent : "";
-    const composed = [`NETWORK RISK: ${lvl}`, sub, "", t].filter(Boolean).join("\n");
-    openTeleprompter(composed);
-  });
-
+  if ($("btnTele")) $("btnTele").addEventListener("click", () => openTeleprompter(buildTeleprompterText()));
   if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
   if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
   if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
@@ -2126,13 +2210,12 @@ async function buildReport(){
     if (document.getElementById("btnTeleFull")) document.getElementById("btnTeleFull").addEventListener("click", goFullscreen);
     if (document.getElementById("teleSpeed")) document.getElementById("teleSpeed").addEventListener("input", (e) => { TELE_SPEED = parseInt(e.target.value,10) || 55; });
     if (document.getElementById("teleFont")) document.getElementById("teleFont").addEventListener("input", (e) => {
-      const v = parseInt(e.target.value,10) || 30;
+      const v = parseInt(e.target.value,10) || 32;
       const t = document.getElementById("teleText");
       if (t) t.style.fontSize = v + "px";
     });
 
-});
-    if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
+  });if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
       const t=$("copyModalText");
       const ok = await tryCopyText(t ? t.value : "");
       setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C.");
@@ -2271,7 +2354,7 @@ async function buildReport(){
         </div>
         <div class="teleSlider">
           <div class="teleLbl">Text</div>
-          <input id="teleFont" type="range" min="18" max="48" value="30" />
+          <input id="teleFont" type="range" min="18" max="54" value="32" />
         </div>
         <button class="btn" id="btnTeleFull">Fullscreen</button>
         <button class="btn warn" id="btnTeleClose">Close</button>
