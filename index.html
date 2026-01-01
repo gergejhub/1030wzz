@@ -406,7 +406,7 @@
 
 
 
-  /* ===== Modern meeting-wall UX (v8.3) ===== */
+  /* ===== Modern + Presenter UX (v8.4) ===== */
   :root{
     --bg0:#070A14;
     --bg1:#0D1226;
@@ -416,7 +416,7 @@
     --stroke2: rgba(255,255,255,0.14);
     --text: rgba(233,238,252,0.92);
     --muted: rgba(233,238,252,0.66);
-    --shadow: 0 18px 60px rgba(0,0,0,0.45);
+    --shadow2: 0 18px 60px rgba(0,0,0,0.45);
   }
 
   body{
@@ -425,72 +425,13 @@
                 linear-gradient(180deg, var(--bg0), var(--bg1));
     color: var(--text);
   }
-
-  .brand{
-    border:1px solid var(--stroke);
-    background: linear-gradient(180deg, rgba(20,26,48,0.78), rgba(12,16,32,0.62));
-    box-shadow: var(--shadow);
-    border-radius: 18px;
-  }
-
-  .card{
-    background: linear-gradient(180deg, var(--card), var(--card2));
-    border: 1px solid var(--stroke);
-    box-shadow: var(--shadow);
-    border-radius: 18px;
-  }
-
-  .section{
-    border: 1px solid var(--stroke);
-    border-radius: 18px;
-    background: linear-gradient(180deg, rgba(18,24,44,0.55), rgba(13,18,34,0.35));
-  }
-
-  h4{
-    letter-spacing: .2px;
-  }
-
-  .kpis{
-    gap: 14px;
-  }
-  .kpi{
-    border: 1px solid var(--stroke);
-    background: linear-gradient(180deg, rgba(15,20,36,0.62), rgba(10,14,26,0.42));
-    border-radius: 16px;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.35);
-  }
-  .kpi .k{
-    color: var(--muted);
-    font-weight: 900;
-    letter-spacing: .25px;
-  }
-  .kpi .v{
-    font-size: 36px;
-    font-weight: 950;
-    letter-spacing: .3px;
-  }
-  .kpi .s{
-    color: rgba(233,238,252,0.58);
-  }
-
-  .table{
-    border-radius: 16px;
-    overflow: hidden;
-    border:1px solid var(--stroke);
-  }
-  .table th{
-    background: rgba(8,12,22,0.65);
-    color: rgba(233,238,252,0.78);
-    letter-spacing: .2px;
-    text-transform: uppercase;
-    font-size: 12px;
-  }
-  .table td{
-    background: rgba(14,18,34,0.40);
-  }
-  .table tr:hover td{
-    background: rgba(106, 90, 255, 0.10);
-  }
+  .brand{ box-shadow: var(--shadow2); border-radius: 18px; }
+  .card{ background: linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--stroke); box-shadow: var(--shadow2); border-radius: 18px; }
+  .section{ border: 1px solid var(--stroke); border-radius: 18px; background: linear-gradient(180deg, rgba(18,24,44,0.55), rgba(13,18,34,0.35)); }
+  .table{ border-radius: 16px; overflow: hidden; border:1px solid var(--stroke); }
+  .table th{ background: rgba(8,12,22,0.65); color: rgba(233,238,252,0.78); letter-spacing: .2px; text-transform: uppercase; font-size: 12px; }
+  .table td{ background: rgba(14,18,34,0.40); }
+  .table tr:hover td{ background: rgba(106, 90, 255, 0.10); }
 
   .callout{
     margin-top: 12px;
@@ -499,28 +440,13 @@
     border:1px solid var(--stroke);
     background: linear-gradient(180deg, rgba(106, 90, 255, 0.10), rgba(255, 64, 129, 0.06));
   }
-  .calloutTitle{
-    font-weight: 950;
-    letter-spacing: .2px;
-  }
-  .calloutBody{
-    margin-top: 8px;
-    color: rgba(233,238,252,0.86);
-    line-height: 1.45;
-  }
-  .pillRow{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
-  }
+  .calloutTitle{ font-weight: 950; letter-spacing: .2px; }
+  .calloutBody{ margin-top: 8px; color: rgba(233,238,252,0.86); line-height: 1.45; }
+  .pillRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
   .pill{
-    display:inline-flex;
-    align-items:center;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-weight: 950;
-    border:1px solid var(--stroke2);
+    display:inline-flex; align-items:center;
+    padding: 4px 10px; border-radius: 999px;
+    font-weight: 950; border:1px solid var(--stroke2);
     background: rgba(9,12,22,0.55);
     letter-spacing:.2px;
   }
@@ -528,21 +454,70 @@
   .pill.amber{ color: rgba(255,206,120,0.95); }
   .pill.green{ color: rgba(140,255,190,0.95); }
 
-  .btn.primary{
-    box-shadow: 0 14px 40px rgba(106, 90, 255, 0.24);
+  .riskBanner{
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid var(--stroke);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(12,16,32,0.30));
+    box-shadow: var(--shadow2);
+    margin-bottom: 12px;
   }
-
-  .footerVersion{
-    opacity:.65;
-    font-size:12px;
-    padding:10px 4px;
+  .riskLeft{ display:flex; align-items:center; gap: 12px; }
+  .riskLights{ display:flex; gap: 8px; }
+  .riskLights .light{
+    width: 14px; height: 14px; border-radius: 999px;
+    border:1px solid rgba(255,255,255,0.18);
+    opacity: .35;
   }
+  .riskLights .light.red{ background: rgba(255,80,80,0.85); }
+  .riskLights .light.amber{ background: rgba(255,190,70,0.85); }
+  .riskLights .light.green{ background: rgba(120,255,170,0.85); }
+  .riskLights .on{ opacity: 1; box-shadow: 0 0 22px rgba(255,255,255,0.18); }
 
-  /* Make the map visually stronger on big screens */
-  #map{
-    border-radius: 18px !important;
-    border:1px solid var(--stroke) !important;
-    box-shadow: var(--shadow) !important;
+  .riskTitle{ font-weight: 950; letter-spacing: .2px; font-size: 16px; }
+  .riskSub{ color: rgba(233,238,252,0.78); font-weight: 750; margin-top: 2px; }
+  .riskRight{ display:flex; gap: 10px; flex-wrap:wrap; }
+
+  /* Presenter mode: hide sidebar, enlarge key elements */
+  body.presenter .app{ grid-template-columns: 1fr; }
+  body.presenter .panel{ display:none; }
+  body.presenter .report{ padding: 18px 22px; }
+  body.presenter .kpi .v{ font-size: 46px; }
+  body.presenter #map{ height: 520px !important; }
+  body.presenter #readoutBox{ font-size: 16px; line-height: 1.55; }
+  body.presenter .table td{ font-size: 14px; }
+  body.presenter .riskTitle{ font-size: 18px; }
+
+  /* Teleprompter overlay */
+  .teleModal{ position:fixed; inset:0; display:none; z-index:99999; background: rgba(6,9,18,0.92); }
+  .teleModal[aria-hidden="false"]{ display:flex; flex-direction:column; }
+  .teleTop{
+    display:flex; align-items:flex-start; justify-content:space-between; gap: 12px;
+    padding: 14px 16px; border-bottom:1px solid rgba(255,255,255,0.12);
+    background: rgba(8,12,22,0.65);
+  }
+  .teleBrand{ display:flex; flex-direction:column; gap: 4px; }
+  .teleTitle{ font-weight: 950; letter-spacing:.2px; font-size: 16px; }
+  .teleMeta{ color: rgba(233,238,252,0.78); font-size: 12px; font-weight: 750; }
+  .teleControls{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; justify-content:flex-end; }
+  .teleSlider{ display:flex; align-items:center; gap: 8px; }
+  .teleLbl{ font-size: 12px; opacity: .8; font-weight: 850; }
+  #teleSpeed, #teleFont{ width: 140px; }
+  .teleBody{
+    flex:1; overflow:auto;
+    padding: 18px 22px;
+  }
+  #teleText{
+    white-space: pre-wrap;
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 30px;
+    line-height: 1.55;
+    color: rgba(233,238,252,0.95);
+    max-width: 1100px;
+    margin: 0 auto;
   }
 </style>
 
@@ -558,8 +533,8 @@
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
         <div>
-          <h1>Wizz Network Weather & Delay Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.3-modern</span></small>
+          <h1>Wizz NOP Weather Brief</h1>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.4-presenter</span></small>
         </div>
       </div>
 
@@ -683,7 +658,26 @@
           </div>
         </div>
 
-        <div class="kpis">
+        
+        <div class="riskBanner" id="riskBanner" style="display:none;">
+          <div class="riskLeft">
+            <div class="riskLights" aria-hidden="true">
+              <span class="light red" id="lightRed"></span>
+              <span class="light amber" id="lightAmber"></span>
+              <span class="light green" id="lightGreen"></span>
+            </div>
+            <div>
+              <div class="riskTitle">Network disruption risk: <span id="riskLevel">—</span></div>
+              <div class="riskSub" id="riskSub">—</div>
+            </div>
+          </div>
+          <div class="riskRight">
+            <button class="btn primary" id="btnPresenter">Presenter mode</button>
+            <button class="btn" id="btnTele">Teleprompter</button>
+            <button class="btn" id="btnFull">Fullscreen</button>
+          </div>
+        </div>
+<div class="kpis">
           <div class="kpi">
             <div class="k">Matched stations</div>
             <div class="v" id="kMatched">0</div>
@@ -722,7 +716,7 @@
 
         <div class="grid2">
           <div class="card">
-            <h4>Executive summary (30–60s readout)</h4>
+            <h4>Executive summary</h4>
             <ul class="bullets" id="execBullets">
               <li>Load your ICAO list and the daily NOP PDF, then build the report.</li>
               <li>If URL fetch fails due to CORS, use file upload.</li>
@@ -808,7 +802,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.3-modern</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.4-presenter</span></div>
 </main>
   </div>
 
@@ -873,7 +867,119 @@
 function nowLocal(){
     const d = new Date();
     const pad = (n) => String(n).padStart(2,"0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}
+
+  // ===== Presenter / Teleprompter =====
+  function togglePresenterMode(){
+    document.body.classList.toggle("presenter");
+    setStatus("buildStatus", document.body.classList.contains("presenter") ? "Presenter mode ON." : "Presenter mode OFF.");
+  }
+
+  async function goFullscreen(){
+    try{
+      const el = document.documentElement;
+      if (!document.fullscreenElement){
+        await el.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch(e){
+      console.warn(e);
+      setStatus("buildStatus", "Fullscreen not available (browser policy).");
+    }
+  }
+
+  function computeNetworkRisk(reds, ambs){
+    // Simple, explainable heuristic for management use
+    if (reds >= 3) return { level: "HIGH", light: "red" };
+    if (reds >= 1) return { level: "MEDIUM", light: "amber" };
+    if (ambs >= 4) return { level: "MEDIUM", light: "amber" };
+    return { level: "LOW", light: "green" };
+  }
+
+  function setRiskLights(which){
+    const r = document.getElementById("lightRed");
+    const a = document.getElementById("lightAmber");
+    const g = document.getElementById("lightGreen");
+    [r,a,g].forEach(x => x && x.classList.remove("on"));
+    if (which === "red" && r) r.classList.add("on");
+    if (which === "amber" && a) a.classList.add("on");
+    if (which === "green" && g) g.classList.add("on");
+  }
+
+  function updateRiskBanner(reds, ambs, matched, synopsis){
+    const banner = document.getElementById("riskBanner");
+    if (!banner) return;
+    const risk = computeNetworkRisk(reds, ambs);
+    const levelEl = document.getElementById("riskLevel");
+    const subEl = document.getElementById("riskSub");
+
+    const drivers = driversFromItems(matched);
+    const top3 = matched.slice(0,3).map(x => {
+      const st = stationLabel(x.icao);
+      const name = st.station !== "—" ? st.station : x.icao;
+      return `${name} (${x.icao})`;
+    }).join(", ");
+
+    if (levelEl) levelEl.textContent = risk.level;
+    if (subEl) subEl.textContent = `${drivers}. Focus: ${top3 || "—"}. ${synopsis ? "Synopsis: " + synopsis : ""}`;
+    setRiskLights(risk.light);
+
+    banner.style.display = "flex";
+  }
+
+  // Teleprompter overlay
+  let TELE_RUNNING = false;
+  let TELE_SPEED = 55; // px/s
+  let TELE_RAF = null;
+  let TELE_LAST = 0;
+
+  function openTeleprompter(text){
+    const modal = document.getElementById("teleModal");
+    const pre = document.getElementById("teleText");
+    const body = document.getElementById("teleBody");
+    if (!modal || !pre || !body) return;
+    pre.textContent = text || "—";
+    body.scrollTop = 0;
+    modal.setAttribute("aria-hidden", "false");
+
+    // meta
+    const left = document.getElementById("teleMetaLeft");
+    const right = document.getElementById("teleMetaRight");
+    if (left) left.textContent = `Source: ${PDF_SOURCE || "—"}`;
+    if (right) right.textContent = `Generated: ${nowLocal()}`;
+  }
+
+  function closeTeleprompter(){
+    const modal = document.getElementById("teleModal");
+    if (!modal) return;
+    stopTeleScroll();
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  function teleTick(ts){
+    if (!TELE_RUNNING) return;
+    const body = document.getElementById("teleBody");
+    if (!body){ TELE_RUNNING = false; return; }
+    if (!TELE_LAST) TELE_LAST = ts;
+    const dt = (ts - TELE_LAST) / 1000.0;
+    TELE_LAST = ts;
+    body.scrollTop += TELE_SPEED * dt;
+    TELE_RAF = requestAnimationFrame(teleTick);
+  }
+
+  function startTeleScroll(){
+    TELE_RUNNING = true;
+    TELE_LAST = 0;
+    if (!TELE_RAF) TELE_RAF = requestAnimationFrame(teleTick);
+  }
+
+  function stopTeleScroll(){
+    TELE_RUNNING = false;
+    TELE_LAST = 0;
+    if (TELE_RAF){ cancelAnimationFrame(TELE_RAF); TELE_RAF = null; }
+  }
+-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
   function todayUtcYmd(){
     const d = new Date();
@@ -1869,7 +1975,10 @@ async function buildReport(){
 
     // Map + management readout
     renderMap(top);
-    if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = buildReadout(matched, synopsis, enroute);
+    const readout = buildReadout(matched, synopsis, enroute);
+    if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = readout;
+    updateRiskBanner(reds, ambs, matched, synopsis);
+
 
 
     // Diagnostics
@@ -1989,6 +2098,16 @@ async function buildReport(){
   if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
   if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => { const t=$("copyModalText"); const ok = await tryCopyText(t ? t.value : ""); setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C."); });
   if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
+  if ($("btnPresenter")) $("btnPresenter").addEventListener("click", togglePresenterMode);
+  if ($("btnFull")) $("btnFull").addEventListener("click", goFullscreen);
+  if ($("btnTele")) $("btnTele").addEventListener("click", () => {
+    const t = document.getElementById("readoutBox") ? document.getElementById("readoutBox").textContent : "";
+    const lvl = document.getElementById("riskLevel") ? document.getElementById("riskLevel").textContent : "—";
+    const sub = document.getElementById("riskSub") ? document.getElementById("riskSub").textContent : "";
+    const composed = [`NETWORK RISK: ${lvl}`, sub, "", t].filter(Boolean).join("\n");
+    openTeleprompter(composed);
+  });
+
   if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
   if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
   if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
@@ -1999,7 +2118,20 @@ async function buildReport(){
   window.addEventListener("DOMContentLoaded", () => {
     if ($("btnCloseModal")) $("btnCloseModal").addEventListener("click", closeCopyModal);
     if ($("copyModalBackdrop")) $("copyModalBackdrop").addEventListener("click", closeCopyModal);
-    if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
+    if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } 
+    // Teleprompter controls
+    if (document.getElementById("btnTeleClose")) document.getElementById("btnTeleClose").addEventListener("click", closeTeleprompter);
+    if (document.getElementById("btnTelePlay")) document.getElementById("btnTelePlay").addEventListener("click", startTeleScroll);
+    if (document.getElementById("btnTelePause")) document.getElementById("btnTelePause").addEventListener("click", stopTeleScroll);
+    if (document.getElementById("btnTeleFull")) document.getElementById("btnTeleFull").addEventListener("click", goFullscreen);
+    if (document.getElementById("teleSpeed")) document.getElementById("teleSpeed").addEventListener("input", (e) => { TELE_SPEED = parseInt(e.target.value,10) || 55; });
+    if (document.getElementById("teleFont")) document.getElementById("teleFont").addEventListener("input", (e) => {
+      const v = parseInt(e.target.value,10) || 30;
+      const t = document.getElementById("teleText");
+      if (t) t.style.fontSize = v + "px";
+    });
+
+});
     if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
       const t=$("copyModalText");
       const ok = await tryCopyText(t ? t.value : "");
@@ -2119,6 +2251,34 @@ async function buildReport(){
         <button class="btn primary" id="btnCopyModal">Copy to clipboard</button>
         <button class="btn" id="btnSelectAll">Select all</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- Teleprompter / Presenter overlay -->
+  <div id="teleModal" class="teleModal" aria-hidden="true">
+    <div class="teleTop">
+      <div class="teleBrand">
+        <div class="teleTitle">Management readout</div>
+        <div class="teleMeta"><span id="teleMetaLeft">—</span> · <span id="teleMetaRight">—</span></div>
+      </div>
+      <div class="teleControls">
+        <button class="btn" id="btnTelePlay">Play</button>
+        <button class="btn" id="btnTelePause">Pause</button>
+        <div class="teleSlider">
+          <div class="teleLbl">Speed</div>
+          <input id="teleSpeed" type="range" min="10" max="140" value="55" />
+        </div>
+        <div class="teleSlider">
+          <div class="teleLbl">Text</div>
+          <input id="teleFont" type="range" min="18" max="48" value="30" />
+        </div>
+        <button class="btn" id="btnTeleFull">Fullscreen</button>
+        <button class="btn warn" id="btnTeleClose">Close</button>
+      </div>
+    </div>
+    <div class="teleBody" id="teleBody">
+      <pre id="teleText">—</pre>
     </div>
   </div>
 
