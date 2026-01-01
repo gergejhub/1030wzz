@@ -419,7 +419,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>Wizz NOP Weather Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.7-ogimet-metar</span></small>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.7.1-ogimet-stable</span></small>
         </div>
       </div>
 
@@ -654,8 +654,8 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.7-ogimet-metar</span></div>
-<div class="footerVersion">Version: <span class="mono">v8.7-ogimet-metar</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.7.1-ogimet-stable</span></div>
+<div class="footerVersion">Version: <span class="mono">v8.7.1-ogimet-stable</span></div>
 </main>
   </div>
 
@@ -747,30 +747,6 @@ function nowLocal(){
       const m = l.match(/\b[A-Z]{4}\b/);
       if (m) out.push(m[0]);
     }
-
-
-  function pad2(n){ return String(n).padStart(2,"0"); }
-  function fmtOgimet(dt){
-    // dt: Date in UTC
-    return dt.getUTCFullYear() + pad2(dt.getUTCMonth()+1) + pad2(dt.getUTCDate()) + pad2(dt.getUTCHours()) + pad2(dt.getUTCMinutes());
-  }
-
-  async function fetchTextWithFallback(url, useProxy){
-    // Try direct fetch first. If blocked by CORS/network, optionally retry via allorigins proxy.
-    try{
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return await r.text();
-    } catch (e){
-      if (!useProxy) throw e;
-      const prox = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-      const r2 = await fetch(prox, { cache: "no-store" });
-      if (!r2.ok) throw new Error("Proxy HTTP " + r2.status);
-      return await r2.text();
-    }
-  }
-
-
     return uniq(out);
   }
 
@@ -2181,109 +2157,86 @@ async function buildReport(){
   async function fetchLiveMetars(){
     const st = document.getElementById("metarStatus");
     const icaos = getAffectedIcaosFromHotspots();
-    const useProxy = !!(document.getElementById("chkOgimetProxy") && document.getElementById("chkOgimetProxy").checked);
-    const useOgimet = !(document.getElementById("chkUseOgimet") && !document.getElementById("chkUseOgimet").checked);
-    const tryAviationFirst = !!(document.getElementById("chkUseAviationWeather") && document.getElementById("chkUseAviationWeather").checked);
-    const debug = !!(document.getElementById("chkDebugMetar") && document.getElementById("chkDebugMetar").checked);
-
     if (st) st.textContent = "Fetching live METARs…";
     if (!icaos.length){
       if (st) st.textContent = "No affected airports to fetch.";
       return;
     }
 
-    // --- Source A: aviationweather.gov (batch) ---
-    async function fetchFromAviationWeather(){
-      const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${encodeURIComponent(icaos.join(","))}&format=raw`;
-      if (debug) console.log("[METAR] aviationweather URL:", url);
-      const r = await fetch(url, { cache:"no-store" });
-      if (!r.ok) throw new Error(`aviationweather HTTP ${r.status}`);
-      const txt = await r.text();
-      const lines = txt.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-      const map = {};
-      for (const line of lines){
-        const mm = parseMetarLine(line);
-        if (mm) map[mm.icao] = mm;
-      }
-      return map;
-    }
+    const sourceSel = document.getElementById("metarSource");
+    const source = sourceSel ? sourceSel.value : "ogimet";
+    const useProxy = !!(document.getElementById("chkProxy") && document.getElementById("chkProxy").checked);
 
-    // --- Source B: OGIMET getmetar (per-station CSV) ---
-    async function fetchFromOgimet(){
-      const now = new Date();
-      const end = fmtOgimet(now);
-      const begin = fmtOgimet(new Date(now.getTime() - 6*60*60*1000)); // last 6h
-      const map = {};
+    const map = {};
+    let okCount = 0;
 
-      // Concurrency limit to avoid hammering OGIMET
-      const maxConc = 6;
-      let i = 0;
+    // small concurrency limiter
+    const limit = 6;
+    let idx = 0;
 
-      async function worker(){
-        while (i < icaos.length){
-          const idx = i++;
-          const icao = icaos[idx];
-          // OGIMET: http://www.ogimet.com/cgi-bin/getmetar?icao=XXXX&begin=YYYYMMDDHHmm&end=...&lang=eng&header=yes
-          const url = `https://www.ogimet.com/cgi-bin/getmetar?icao=${encodeURIComponent(icao)}&begin=${begin}&end=${end}&lang=eng&header=yes`;
-          if (debug) console.log("[METAR] OGIMET URL:", url);
-          try{
-            const txt = await fetchTextWithFallback(url, useProxy);
-            // CSV lines: ICAOIND,YEAR,MONTH,DAY,HOUR,MIN,REPORT
-            const lines = txt.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-            let best = null;
-            for (const line of lines){
-              if (line.toUpperCase().startsWith("ICAOIND")) continue;
-              const parts = line.split(",");
-              if (parts.length < 7) continue;
-              const rep = parts.slice(6).join(",").trim();
-              const t = `${parts[1]}-${pad2(parts[2])}-${pad2(parts[3])} ${pad2(parts[4])}:${pad2(parts[5])}Z`;
-              const raw = rep.startsWith("METAR") || rep.startsWith("SPECI") ? rep.replace(/^\d{12}\s+/, "") : rep;
-              const mm = parseMetarLine(raw);
-              if (!mm) continue;
-              // Prefer most recent line
-              const stamp = `${parts[1]}${pad2(parts[2])}${pad2(parts[3])}${pad2(parts[4])}${pad2(parts[5])}`;
-              if (!best || stamp > best.stamp){
-                best = { stamp, metar: { ...mm, time: mm.time !== "—" ? mm.time : t, raw: raw } };
-              }
-            }
-            if (best) map[icao] = best.metar;
-          } catch(e){
-            // ignore per-station failure
-            if (debug) console.warn("[METAR] OGIMET fetch failed for", icao, e);
-          }
-        }
-      }
+    const runOne = async () => {
+      while (idx < icaos.length){
+        const i = idx++;
+        const icao = icaos[i];
 
-      const workers = [];
-      for (let k=0; k<Math.min(maxConc, icaos.length); k++) workers.push(worker());
-      await Promise.all(workers);
-      return map;
-    }
-
-    try{
-      let map = {};
-      if (tryAviationFirst){
         try{
-          map = await fetchFromAviationWeather();
-        } catch(e){
-          if (debug) console.warn("[METAR] aviationweather failed, falling back to OGIMET", e);
-          if (useOgimet) map = await fetchFromOgimet();
-          else throw e;
-        }
-      } else {
-        if (useOgimet) map = await fetchFromOgimet();
-        else map = await fetchFromAviationWeather();
-      }
+          let metarText = "";
 
-      renderMetarTable(map);
-      if (st) st.textContent = `Loaded ${Object.keys(map).length} METAR(s) for ${icaos.length} affected airport(s).`;
-      if (Object.keys(map).length === 0 && st){
-        st.textContent = "No METARs returned. Use “Paste METARs instead” or enable proxy/debug.";
+          if (source === "aviationweather"){
+            const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${encodeURIComponent(icao)}&format=raw`;
+            metarText = await fetchTextWithFallback(url, useProxy);
+            const lines = String(metarText).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+            // pick last valid line starting with ICAO
+            const pick = lines.reverse().find(l => l.startsWith(icao + " ") || l.startsWith("METAR " + icao) || l.startsWith("SPECI " + icao));
+            const cleaned = pick ? pick.replace(/^METAR\s+/, "").replace(/^SPECI\s+/, "") : "";
+            const m = parseMetarLine(cleaned);
+            if (m) { map[icao] = m; okCount++; }
+            continue;
+          }
+
+          // OGIMET
+          // Query last 3 hours UTC to catch the latest METAR
+          const now = new Date();
+          const end = fmtYmdHm(now);
+          const beginDt = new Date(now.getTime() - 3*60*60*1000);
+          const begin = fmtYmdHm(beginDt);
+
+          // OGIMET often returns HTML; we strip tags then extract METAR-like lines.
+          const url = `https://www.ogimet.com/cgi-bin/getmetar?icao=${encodeURIComponent(icao)}&begin=${begin}&end=${end}&lang=eng&header=yes`;
+          const raw = await fetchTextWithFallback(url, useProxy);
+          const txt = stripHtml(raw);
+
+          // Find the last line containing ICAO and a time group like 011250Z
+          const candidates = txt.split(/\s{2,}|\n/).join("\n").split(/\n/).map(x=>x.trim()).filter(Boolean);
+          let best = "";
+          for (const line of candidates){
+            const L = line.toUpperCase();
+            if ((L.startsWith("METAR " + icao) || L.startsWith("SPECI " + icao) || L.startsWith(icao + " ")) && /\b\d{6}Z\b/.test(L)){
+              best = L;
+            }
+          }
+          if (!best){
+            // fallback: search anywhere in the text
+            const re1 = new RegExp(`\\b(?:METAR|SPECI)?\\s*${icao}\\s+\\d{6}Z\\b[\\s\\S]*`, "i");
+            const mm = txt.match(re1);
+            if (mm) best = mm[0].split("\n")[0].toUpperCase();
+          }
+
+          best = best.replace(/^METAR\s+/, "").replace(/^SPECI\s+/, "");
+          const m = parseMetarLine(best);
+          if (m) { map[icao] = m; okCount++; }
+        } catch(e){
+          // leave missing
+          console.warn("METAR fetch failed for", icao, e);
+        }
       }
-    } catch(e){
-      console.warn(e);
-      if (st) st.textContent = "Live METAR fetch failed (network/CORS). Use “Paste METARs instead”.";
-    }
+    };
+
+    const workers = Array.from({length: Math.min(limit, icaos.length)}, () => runOne());
+    await Promise.all(workers);
+
+    renderMetarTable(map);
+    if (st) st.textContent = `Loaded ${okCount} METAR(s) for ${icaos.length} affected airport(s) via ${source.toUpperCase()}.`;
   }
 
 
@@ -2320,6 +2273,34 @@ async function buildReport(){
     renderMetarTable(map);
     if (st) st.textContent = `Loaded ${Object.keys(map).length} METAR(s) from pasted text.`;
   }
+  async function fetchTextWithFallback(url, useProxy){
+    // Try direct fetch first. If blocked by CORS/network, optionally retry via allorigins proxy.
+    try{
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.text();
+    } catch (e){
+      if (!useProxy) throw e;
+      const prox = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+      const r2 = await fetch(prox, { cache: "no-store" });
+      if (!r2.ok) throw new Error("Proxy HTTP " + r2.status);
+      return await r2.text();
+    }
+  }
+
+  function stripHtml(s){
+    return String(s || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
 </script>
 
   <!-- Copy / prompt modal (clipboard fallback) -->
@@ -2352,15 +2333,19 @@ async function buildReport(){
 
         <div class="row" style="margin-top:10px; gap:10px; flex-wrap:wrap;">
           <button class="btn" id="btnFetchMetar">Fetch live METARs</button>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;">Source</label>
+          <select id="metarSource" style="min-width:220px;">
+            <option value="ogimet" selected>OGIMET (recommended)</option>
+            <option value="aviationweather">aviationweather.gov</option>
+          </select>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;">
+            <input type="checkbox" id="chkProxy" checked /> Use CORS proxy if blocked
+          </label>
+
           <button class="btn" id="btnToggleMetarPaste">Paste METARs instead</button>
           <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;">
             <input type="checkbox" id="chkAutoMetar" checked />
-            Auto-run after “Build report”</label>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkOgimetProxy" checked /> Use CORS proxy if blocked (allorigins)</label>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkUseOgimet" checked /> Use OGIMET as source</label>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkUseAviationWeather" /> Try aviationweather.gov first</label>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkDebugMetar" /> Debug (show fetch URLs)</label>
-<label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkUseOgimet" checked /> Use OGIMET as source
+            Auto-run after “Build report”
           </label>
           <div class="status" id="metarStatus" style="flex:1 1 auto;">—</div>
         </div>
