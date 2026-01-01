@@ -381,6 +381,11 @@
       .badge{ border: 1px solid #999; }
     }
   </style>
+
+  <!-- Leaflet (map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 </head>
 
 <body>
@@ -411,8 +416,8 @@
 
         <label style="margin-top:12px;">Optional station mapping (CSV or JSON)</label>
         <div class="hint">
-          CSV format: <span style="font-family:var(--mono)">ICAO,Name,Country,Type</span> (Type optional: BASE/OUTSTATION).<br/>
-          JSON format: [{ "icao":"LHBP","name":"Budapest","country":"HU","type":"BASE" }, ...]
+          CSV format: <span style="font-family:var(--mono)">ICAO,Name,Country,Type,Lat,Lon</span> (Type optional; Lat/Lon optional).<br/>
+          JSON format: [{ "icao":"LHBP","name":"Budapest","country":"HU","type":"BASE","lat":47.439,"lon":19.261 }, ...]
         </div>
         <input id="mapFile" type="file" accept=".csv,application/json,text/plain" />
         <div class="row" style="margin-top:10px;">
@@ -438,6 +443,15 @@
         <h3>2) NOP PDF input</h3>
 
         <label>Public PDF URL</label>
+        <label style="margin-top:12px;">Optional CORS proxy (advanced)</label>
+        <div class="hint">
+          If the NOP server blocks cross-origin fetch, you can use a small proxy you control (recommended),
+          e.g., a Cloudflare Worker. Enter the proxy endpoint below (leave empty to disable).
+          Expected formats:
+          <span style="font-family:var(--mono)">https://your-proxy.example/fetch?url=</span> (will append encoded PDF URL)
+        </div>
+        <input id="proxyUrl" type="url" placeholder="https://your-proxy.example/fetch?url=" />
+
         <input id="pdfUrl" type="url" placeholder="https://.../YYYYMMDD_HHMM.pdf" />
 
         <div class="row" style="margin-top:10px;">
@@ -584,7 +598,25 @@
           </div>
         </div>
 
-        <div class="card" style="margin-top:12px;">
+        
+        <div class="grid2" style="margin-top:12px;">
+          <div class="card">
+            <h4>Map view (hotspots)</h4>
+            <div class="hint" style="margin-bottom:8px;">
+              Coordinates are auto-resolved from a public airport dataset (OurAirports). No manual Lat/Lon upload needed.
+            </div>
+            <div id="map" style="height:360px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); overflow:hidden;"></div>
+          </div>
+          <div class="card">
+            <h4>Management readout (30–60s script)</h4>
+            <div class="raw" id="readoutBox">—</div>
+            <div class="hint" style="margin-top:8px;">
+              This script is generated from the extracted NOP synopsis + Wizz-filtered hotspots. It is deterministic (no external AI calls) and safe to read verbatim.
+            </div>
+          </div>
+        </div>
+
+<div class="card" style="margin-top:12px;">
           <h4>En-route / airspace signals (extracted)</h4>
           <div class="raw" id="enrouteBox">—</div>
         </div>
@@ -594,7 +626,13 @@
           <div class="raw" id="synopsisBox">—</div>
         </div>
 
+        
         <div class="card" style="margin-top:12px;">
+          <h4>Raw 'Airports Overview' section (extracted)</h4>
+          <div class="raw" id="airportsOverviewBox">—</div>
+        </div>
+
+<div class="card" style="margin-top:12px;">
           <h4>Parsing diagnostics</h4>
           <div class="raw" id="debugBox">Ready.</div>
         </div>
@@ -655,8 +693,9 @@
     return uniq(out);
   }
 
+  
   function parseCsvMapping(text){
-    // ICAO,Name,Country,Type
+    // ICAO,Name,Country,Type,Lat,Lon
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     const out = [];
     for (const line of lines){
@@ -665,11 +704,17 @@
       if (parts.length < 2) continue;
       const icao = (parts[0] || "").toUpperCase();
       if (!/^[A-Z]{4}$/.test(icao)) continue;
+
+      const lat = parts.length >= 5 ? parseFloat(parts[4]) : NaN;
+      const lon = parts.length >= 6 ? parseFloat(parts[5]) : NaN;
+
       out.push({
         icao,
         name: parts[1] || "",
         country: parts[2] || "",
-        type: (parts[3] || "").toUpperCase()
+        type: (parts[3] || "").toUpperCase(),
+        lat: Number.isFinite(lat) ? lat : null,
+        lon: Number.isFinite(lon) ? lon : null
       });
     }
     return out;
@@ -782,7 +827,46 @@
         items.push({ icao: m[1], time: m[2], snippet: m[3].trim(), raw: `${m[1]} ${m[2]} ${m[3].trim()}` });
       }
     }
-    return items;
+    
+
+    // Extra fallback: scan within Airports Overview section for known ICAOs and capture a nearby window
+    // This helps when PDF line breaks / ordering are heavily distorted.
+    if (items.length < 3){
+      try{
+        const sec2 = extractSection(text, "Airports Overview", ["En-route", "En route", "En-Route", "Disclaimer", "Legend", "Definitions"]);
+        const hay = (sec2 || "").replace(/\s+/g," ").trim();
+        if (hay){
+          const found = new Map(); // icao -> best snippet
+          // Collect all ICAO-like tokens with their position
+          const reIcao = /\b[A-Z]{4}\b/g;
+          let mm;
+          while ((mm = reIcao.exec(hay)) !== null){
+            const icao = mm[0];
+            // Take a window after the ICAO token
+            const start = mm.index;
+            const windowText = hay.slice(start, Math.min(hay.length, start + 180));
+            // Expect time window close by
+            const tm = windowText.match(/\b(\d{4}\/\d{4})\b/);
+            const time = tm ? tm[1] : "";
+            // Stop at the next ICAO token to avoid bleeding
+            const next = windowText.slice(5).search(/\b[A-Z]{4}\b\s+\d{4}\/\d{4}\b/);
+            const snippet = (next > 0 ? windowText.slice(0, 5 + next) : windowText).replace(/\s+/g," ").trim();
+            if (!found.has(icao) || (found.get(icao).snippet.length < snippet.length)){
+              found.set(icao, { icao, time: time || "—", snippet: snippet.replace(/^([A-Z]{4}\s+)/, "").replace(/^\d{4}\/\d{4}\s+/, ""), raw: snippet });
+            }
+          }
+          // Replace items with this broader set if it helps
+          const broader = Array.from(found.values())
+            .filter(x => /^[A-Z]{4}$/.test(x.icao) && x.snippet && x.snippet.length > 6);
+          if (broader.length > items.length){
+            return broader;
+          }
+        }
+      } catch(e){
+        // ignore
+      }
+    }
+return items;
   }
 
   // Risk tagging / scoring (heuristic)
@@ -864,11 +948,14 @@
 
   function stationLabel(icao){
     const m = STATION_MAP.get(icao);
-    if (!m) return { station: "—", country: "—", type: "" };
+    if (!m) return { station: "—", country: "—", type: "", lat: null, lon: null };
     const station = m.name || "—";
     const country = m.country || "—";
     const type = (m.type || "").toUpperCase();
-    return { station, country, type };
+    const lat0 = (typeof m.lat === "number" ? m.lat : null);
+    const lon0 = (typeof m.lon === "number" ? m.lon : null);
+    const cached = ICAO_COORDS.get(icao);
+    return { station, country, type, lat: (lat0 !== null ? lat0 : (cached ? cached.lat : null)), lon: (lon0 !== null ? lon0 : (cached ? cached.lon : null)) };
   }
 
   function buildExecutiveBullets(matched){
@@ -1071,7 +1158,228 @@
   }
 
   // Build report
-  function buildReport(){
+  
+  
+  // --- Airport coordinates (auto-resolve)
+  // Uses OurAirports CSV (public dataset) via raw.githubusercontent.com.
+  // Caches a small lookup map in localStorage to avoid repeated downloads.
+  let ICAO_COORDS = new Map(); // ICAO -> {lat, lon}
+
+  function loadCoordsFromStorage(){
+    try{
+      const raw = localStorage.getItem("wizz_icao_coords_v1");
+      if (!raw) return false;
+      const obj = JSON.parse(raw);
+      ICAO_COORDS = new Map(Object.entries(obj).map(([k,v]) => [k, v]));
+      return true;
+    } catch(e){ return false; }
+  }
+
+  function saveCoordsToStorage(){
+    try{
+      const obj = Object.fromEntries(ICAO_COORDS.entries());
+      localStorage.setItem("wizz_icao_coords_v1", JSON.stringify(obj));
+    } catch(e){}
+  }
+
+  async function fetchOurAirportsCsv(){
+    const urls = [
+      "https://raw.githubusercontent.com/davidmegginson/ourairports-data/master/airports.csv",
+      "https://cdn.jsdelivr.net/gh/davidmegginson/ourairports-data@master/airports.csv"
+    ];
+    let lastErr = null;
+    for (const u of urls){
+      try{
+        const r = await fetch(u, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return await r.text();
+      } catch(e){ lastErr = e; }
+    }
+    throw lastErr || new Error("Failed to download OurAirports dataset.");
+  }
+
+  // Minimal CSV splitter that respects quotes for the fields we need
+  function splitCsvLine(line){
+    const out = [];
+    let cur = "";
+    let inQ = false;
+    for (let i=0; i<line.length; i++){
+      const ch = line[i];
+      if (ch === '"'){
+        if (inQ && line[i+1] === '"'){ cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ){
+        out.push(cur); cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
+  async function ensureCoordsForIcaos(icaos){
+    // Load cache
+    if (!ICAO_COORDS.size) loadCoordsFromStorage();
+
+    const missing = [];
+    for (const icao of icaos){
+      if (ICAO_COORDS.has(icao)) continue;
+      // If mapping file already has coords, use them
+      const m = STATION_MAP.get(icao);
+      if (m && typeof m.lat === "number" && typeof m.lon === "number"){
+        ICAO_COORDS.set(icao, { lat: m.lat, lon: m.lon });
+        continue;
+      }
+      missing.push(icao);
+    }
+    if (!missing.length) return;
+
+    // Download & parse OurAirports CSV once, then fill missing coords
+    setStatus("buildStatus", `Resolving coordinates for ${missing.length} station(s) from public dataset…`);
+    const csv = await fetchOurAirportsCsv();
+
+    // Find column indices from header
+    const lines = csv.split(/\r?\n/);
+    if (!lines.length) throw new Error("OurAirports CSV empty.");
+    const header = splitCsvLine(lines[0]).map(x => x.trim());
+    const idxIdent = header.indexOf("ident");
+    const idxLat = header.indexOf("latitude_deg");
+    const idxLon = header.indexOf("longitude_deg");
+    if (idxIdent < 0 || idxLat < 0 || idxLon < 0) throw new Error("Unexpected OurAirports CSV format.");
+
+    const need = new Set(missing);
+    // Parse line by line; stop early if all found
+    for (let i=1; i<lines.length; i++){
+      const line = lines[i];
+      if (!line) continue;
+      const cols = splitCsvLine(line);
+      const ident = (cols[idxIdent] || "").toUpperCase();
+      if (!need.has(ident)) continue;
+      const lat = parseFloat(cols[idxLat]);
+      const lon = parseFloat(cols[idxLon]);
+      if (Number.isFinite(lat) && Number.isFinite(lon)){
+        ICAO_COORDS.set(ident, { lat, lon });
+      }
+      need.delete(ident);
+      if (!need.size) break;
+    }
+
+    saveCoordsToStorage();
+    const unresolved = [...need.values()];
+    if (unresolved.length){
+      setStatus("buildStatus", `Coordinates resolved, but ${unresolved.length} station(s) still missing (unknown ICAO in dataset).`);
+    } else {
+      setStatus("buildStatus", "Coordinates resolved.");
+    }
+  }
+
+// --- Map (Leaflet)
+  let MAP = null;
+  let MAP_LAYER = null;
+
+  function initMap(){
+    if (MAP) return;
+    const el = document.getElementById("map");
+    if (!el || !window.L) return;
+    MAP = L.map("map", { zoomControl: true, attributionControl: false }).setView([50, 10], 4);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 9 }).addTo(MAP);
+    MAP_LAYER = L.layerGroup().addTo(MAP);
+  }
+
+  function markerColor(sev){
+    if (sev === "RED") return "#ff4d6d";
+    if (sev === "AMBER") return "#ffce3a";
+    return "#2ee59d";
+  }
+
+  function renderMap(items){
+    initMap();
+    const box = document.getElementById("map");
+    if (!MAP || !MAP_LAYER || !box) return;
+
+    MAP_LAYER.clearLayers();
+    const pts = [];
+
+    for (const it of items){
+      const st = stationLabel(it.icao);
+      if (typeof st.lat !== "number" || typeof st.lon !== "number") continue;
+
+      const color = markerColor(it.sev);
+      const marker = L.circleMarker([st.lat, st.lon], {
+        radius: 8,
+        color: color,
+        weight: 2,
+        fillColor: color,
+        fillOpacity: 0.55
+      });
+
+      const popup = `<div style="font-family: ui-sans-serif, system-ui; font-weight:800; margin-bottom:6px;">
+          ${it.icao} — ${(st.station || "—")}
+        </div>
+        <div style="font-family: ui-monospace, Menlo, Consolas; font-size:12px; line-height:1.35;">
+          <div><b>${it.sev}</b> / <b>${it.delayRisk}</b> (score ${it.score})</div>
+          <div style="margin-top:6px;">${escapeHtml(it.time)}</div>
+          <div style="margin-top:6px;">${escapeHtml((it.tags||[]).join(", "))}</div>
+          <div style="margin-top:6px;">${escapeHtml(it.snippet || "")}</div>
+        </div>`;
+      marker.bindPopup(popup);
+      marker.addTo(MAP_LAYER);
+      pts.push([st.lat, st.lon]);
+    }
+
+    if (pts.length){
+      const bounds = L.latLngBounds(pts);
+      MAP.fitBounds(bounds.pad(0.35));
+    } else {
+      // no coords
+      MAP.setView([50, 10], 4);
+    }
+  }
+
+  function buildReadout(matched, synopsis, enroute){
+    // 30–60s script, meeting-friendly.
+    const reds = matched.filter(x => x.sev === "RED");
+    const ambs = matched.filter(x => x.sev === "AMBER");
+    const top = matched.slice(0, 6);
+
+    const drivers = driversFromItems(matched);
+    const baseHit = matched.filter(x => x.isBase).map(x => x.icao);
+    const baseTxt = baseHit.length ? `Core base exposure includes ${uniq(baseHit).slice(0,6).join(", ")}. ` : "";
+
+    const topTxt = top.length ? top.map(x => {
+      const st = stationLabel(x.icao);
+      const nm = st.station && st.station !== "—" ? ` (${st.station})` : "";
+      return `${x.icao}${nm} ${x.sev}/${x.delayRisk}`;
+    }).join(", ") : "no Wizz-matching hotspots at the selected threshold";
+
+    const lines = [];
+    lines.push(`Good morning. Here is today’s Wizz network weather and delay-risk overview based on the NOP Network Weather Assessment.`);
+    lines.push(`Primary disruption drivers are: ${drivers}.`);
+    if (reds.length){
+      lines.push(`We have ${reds.length} RED hotspot(s) with high disruption potential. Please expect elevated reactionary delays and rotation knock-on risk.`);
+    } else {
+      lines.push(`No RED hotspots at the current threshold; disruption risk appears more localized rather than network-wide.`);
+    }
+    if (ambs.length){
+      lines.push(`${ambs.length} AMBER station(s) indicate moderate operational variability and potential sequencing/capacity sensitivity.`);
+    }
+    lines.push(`${baseTxt}Top impacted stations to watch: ${topTxt}.`);
+    // Add a short en-route cue if present
+    const en = (enroute || "").replace(/\s+/g," ").trim();
+    if (en && en.length > 80){
+      lines.push(`En-route note: ${en.slice(0, 220)}${en.length > 220 ? "…" : ""}`);
+    }
+    // Add a short synopsis cue if present
+    const syn = (synopsis || "").replace(/\s+/g," ").trim();
+    if (syn && syn.length > 80){
+      lines.push(`Synopsis cue: ${syn.slice(0, 240)}${syn.length > 240 ? "…" : ""}`);
+    }
+    lines.push(`Recommended posture: protect critical turns, prioritize base wave integrity where exposed, and monitor ATFM/capacity updates.`);
+    return lines.join("\n\n");
+  }
+
+async function buildReport(){
     if (!WIZZ_ICAOS.size){
       setStatus("buildStatus", "Load your Wizz ICAO list first.");
       return;
@@ -1087,6 +1395,11 @@
     const synopsis = extractSynopsis(PDF_TEXT);
     const enroute = extractEnroute(PDF_TEXT);
     const overview = parseAirportsOverview(PDF_TEXT);
+
+    // Populate raw Airports Overview section (debug)
+    const rawAO = extractSection(PDF_TEXT, "Airports Overview", ["En-route", "En route", "En-Route", "Disclaimer", "Legend", "Definitions"]);
+    if (document.getElementById("airportsOverviewBox")) document.getElementById("airportsOverviewBox").textContent = rawAO || "—";
+
 
     let matched = overview
       .filter(it => WIZZ_ICAOS.has(it.icao))
@@ -1161,6 +1474,12 @@
 
     $("synopsisBox").textContent = synopsis || "—";
     $("enrouteBox").textContent = enroute || "—";
+
+    // Map + management readout
+    await ensureCoordsForIcaos(new Set(top.map(x => x.icao)));
+    renderMap(top);
+    if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = buildReadout(matched, synopsis, enroute);
+
 
     // Diagnostics
     const dbg = [
@@ -1249,12 +1568,14 @@
 
   $("btnFetchPdf").addEventListener("click", async () => {
     const url = $("pdfUrl").value.trim();
+    const proxy = ($("proxyUrl") ? $("proxyUrl").value.trim() : "");
+    const fetchUrl = proxy ? (proxy + encodeURIComponent(url)) : url;
     if (!url){ setStatus("pdfStatus", "Enter a PDF URL."); return; }
     setStatus("pdfStatus", "Fetching PDF… " + url);
     try{
-      const buf = await loadPdfFromUrl(url);
+      const buf = await loadPdfFromUrl(fetchUrl);
       PDF_TEXT = await extractTextFromPdfArrayBuffer(buf);
-      PDF_SOURCE = url;
+      PDF_SOURCE = url; // keep original as source
       PDF_LOADED_AT = nowLocal();
       setStatus("pdfStatus", "PDF loaded from URL.");
     } catch(e){
@@ -1291,6 +1612,8 @@
     // Heuristic: replace YYYYMMDD patterns in the URL with today's UTC date.
     // If multiple matches exist, replace all.
     const url = $("pdfUrl").value.trim();
+    const proxy = ($("proxyUrl") ? $("proxyUrl").value.trim() : "");
+    const fetchUrl = proxy ? (proxy + encodeURIComponent(url)) : url;
     if (!url){ setStatus("pdfStatus", "Paste a URL first, then click Set date."); return; }
     const ymd = todayUtcYmd();
     const updated = url.replace(/\b20\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/g, ymd);
@@ -1303,6 +1626,11 @@
   $("btnPrint").addEventListener("click", () => window.print());
   $("btnDocx").addEventListener("click", exportDocx);
   $("btnPptx").addEventListener("click", exportPptx);
+  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
+
+  // Auto-load repo files on startup (best-effort)
+  (async () => { try { await autoLoadFromRepo(); } catch(e){} })();
+
   $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
 
   // Auto-run if query params request it
