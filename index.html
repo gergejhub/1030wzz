@@ -419,7 +419,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>Wizz NOP Weather Brief</h1>
-          <small>Meeting mode — Executive Summary, Map, Readout, Top 10 | <span id="verTag">v14-meeting</span></small>
+          <small>Meeting mode — Executive Summary, Map, Readout, Top 10 | <span id="verTag">v15-meeting</span></small>
         </div>
       </div>
 
@@ -640,7 +640,7 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.65; font-size:12px; padding:10px 4px;">Version: <span id="verFooter">v14-meeting</span></div>
+    <div style="opacity:.65; font-size:12px; padding:10px 4px;">Version: <span id="verFooter">v15-meeting</span></div>
 </main>
   </div>
 
@@ -1717,13 +1717,13 @@ async function buildReport(){
   }
 
   // UI events
-  $("btnUseSample").addEventListener("click", () => {
+  if ($("btnUseSample")) $("btnUseSample").addEventListener("click", () => {
     WIZZ_ICAOS = new Set(SAMPLE_ICAOS);
     setStatus("icaoStatus", `Loaded sample: ${WIZZ_ICAOS.size} ICAO codes`);
     $("rStations").textContent = String(WIZZ_ICAOS.size);
   });
 
-  $("btnLoadIcao").addEventListener("click", async () => {
+  if ($("btnLoadIcao")) $("btnLoadIcao").addEventListener("click", async () => {
     const f = $("icaoFile").files[0];
     if (!f){ setStatus("icaoStatus", "No TXT selected."); return; }
     const text = await readFileText(f);
@@ -1733,12 +1733,12 @@ async function buildReport(){
     $("rStations").textContent = String(WIZZ_ICAOS.size);
   });
 
-  $("btnUseBaseSample").addEventListener("click", () => {
+  if ($("btnUseBaseSample")) $("btnUseBaseSample").addEventListener("click", () => {
     CORE_BASES = new Set(SAMPLE_BASES);
     setStatus("baseStatus", `Loaded sample bases: ${CORE_BASES.size}`);
   });
 
-  $("btnLoadBases").addEventListener("click", async () => {
+  if ($("btnLoadBases")) $("btnLoadBases").addEventListener("click", async () => {
     const f = $("baseFile").files[0];
     if (!f){ setStatus("baseStatus", "No TXT selected."); return; }
     const text = await readFileText(f);
@@ -1747,13 +1747,13 @@ async function buildReport(){
     setStatus("baseStatus", `Loaded bases: ${CORE_BASES.size}`);
   });
 
-  $("btnClearMap").addEventListener("click", () => {
+  if ($("btnClearMap")) $("btnClearMap").addEventListener("click", () => {
     STATION_MAP.clear();
     setStatus("mapStatus", "Mapping cleared.");
     $("rMapping").textContent = "none";
   });
 
-  $("btnLoadMap").addEventListener("click", async () => {
+  if ($("btnLoadMap")) $("btnLoadMap").addEventListener("click", async () => {
     const f = $("mapFile").files[0];
     if (!f){ setStatus("mapStatus", "No mapping file selected."); return; }
     const name = (f.name || "").toLowerCase();
@@ -1783,7 +1783,7 @@ async function buildReport(){
     }
   });
 
-    $("btnLoadPdfFile").addEventListener("click", async () => {
+    if ($("btnLoadPdfFile")) $("btnLoadPdfFile").addEventListener("click", async () => {
     const f = $("pdfFile").files[0];
     if (!f){ setStatus("pdfStatus", "No PDF selected."); return; }
     setStatus("pdfStatus", "Parsing PDF…");
@@ -1799,7 +1799,7 @@ async function buildReport(){
     }
   });
 
-  $("btnClearPdf").addEventListener("click", () => {
+  if ($("btnClearPdf")) $("btnClearPdf").addEventListener("click", () => {
     PDF_TEXT = ""; PDF_SOURCE = ""; PDF_LOADED_AT = null;
     setStatus("pdfStatus", "No PDF loaded.");
     $("synopsisBox").textContent = "—";
@@ -1807,17 +1807,17 @@ async function buildReport(){
     $("debugBox").textContent = "Ready.";
   });
 
-    $("btnBuild").addEventListener("click", buildReport);
-  $("btnCopy").addEventListener("click", copyMeetingSummary);
-  $("btnPrint").addEventListener("click", () => window.print());
+    if ($("btnBuild")) $("btnBuild").addEventListener("click", buildReport);
+  if ($("btnCopy")) $("btnCopy").addEventListener("click", copyMeetingSummary);
+  if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
   if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
   if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
-  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
+  if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
 
   // Auto-load repo files on startup (best-effort)
   (async () => { try { await autoLoadFromRepo(); } catch(e){} })();
 
-  $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
+  if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
 
   // Auto-run if query params request it
   (async () => {
