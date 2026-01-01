@@ -7,6 +7,57 @@
 
   <!-- PDF.js (client-side PDF text extraction) -->
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.min.js">
+
+  function openWxCharts(){
+    const sel = document.getElementById("wxSelect");
+    const icao = sel && sel.value ? sel.value : "";
+    if (!icao){
+      setStatus("buildStatus", "WxCharts: no ICAO selected.");
+      return;
+    }
+    const url = wxUrl(icao);
+    // Attempt open in new tab (may be blocked by browser policies)
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w){
+      setStatus("buildStatus", "Popup blocked: use the WxCharts link shown in the table (or copy from the prompt modal).");
+      // Show modal with the URL so user can click/copy
+      openCopyModal("WxCharts link:\n" + url);
+    } else {
+      setStatus("buildStatus", `WxCharts opened: ${icao}`);
+    }
+  }
+
+  // Wire UI controls (robust, even if other blocks change)
+  document.addEventListener("DOMContentLoaded", () => {
+    try{
+      const btnCopilot = document.getElementById("btnCopilot");
+      if (btnCopilot) btnCopilot.addEventListener("click", (e) => { e.preventDefault(); copyCopilotPrompt(); });
+
+      const btnWx = document.getElementById("btnWxOpen");
+      if (btnWx) btnWx.addEventListener("click", (e) => { e.preventDefault(); openWxCharts(); });
+
+      const btnClose = document.getElementById("btnCloseModal");
+      if (btnClose) btnClose.addEventListener("click", closeCopyModal);
+
+      const backdrop = document.getElementById("copyModalBackdrop");
+      if (backdrop) backdrop.addEventListener("click", closeCopyModal);
+
+      const btnSel = document.getElementById("btnSelectAll");
+      if (btnSel) btnSel.addEventListener("click", () => { const t = document.getElementById("copyModalText"); if (t){ t.focus(); t.select(); } });
+
+      const btnCopy = document.getElementById("btnCopyModal");
+      if (btnCopy) btnCopy.addEventListener("click", async () => {
+        const t = document.getElementById("copyModalText");
+        const ok = await tryCopyText(t ? t.value : "");
+        setStatus("buildStatus", ok ? "Copied from prompt window." : "Copy failed: select all and press Ctrl+C.");
+      });
+
+    } catch(err){
+      // Surface wiring failures
+      setStatus("buildStatus", "UI wiring error: " + (err && err.message ? err.message : String(err)));
+    }
+  });
+
   // Modal copy fallback
   document.addEventListener("click", (e) => {
     if (e.target && e.target.id === "btnCloseModal") closeCopyModal();
@@ -647,7 +698,7 @@
             <div class="row" style="margin-top:10px; gap:10px; align-items:center;">
               <label style="margin:0; min-width:120px;">WxCharts</label>
               <select id="wxSelect" class="select" style="flex:1;"></select>
-              <button class="btn" id="btnWxOpen">Open WxCharts</button>
+              <button class="btn" id="btnWxOpen" onclick="openWxCharts()">Open WxCharts</button>
             </div>
             <div class="hint" style="margin-top:6px;">Opens WxCharts for the selected ICAO in a new tab. (Link format uses an ICAO query parameter.)</div>
             </div>
@@ -656,7 +707,7 @@
           <div class="card">
             <h4>Management readout (30–60s script)</h4>
             <div class="row" style="margin-top:10px; gap:8px;">
-              <button class="btn" id="btnCopilot">Copy Copilot prompt (rewrite script)</button>
+              <button class="btn" id="btnCopilot" onclick="copyCopilotPrompt()">Copy Copilot prompt (rewrite script)</button>
             </div>
             <div class="raw" id="readoutBox">—</div>
             <div class="hint" style="margin-top:8px;">
