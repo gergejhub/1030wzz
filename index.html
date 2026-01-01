@@ -404,184 +404,7 @@
   }
   .modalActions{ display:flex; gap:10px; justify-content:flex-end; }
 
-
-
-  /* ===== Modern meeting-wall UX (v8.3) ===== */
-  :root{
-    --bg0:#070A14;
-    --bg1:#0D1226;
-    --card: rgba(18, 24, 44, 0.82);
-    --card2: rgba(13, 18, 34, 0.72);
-    --stroke: rgba(255,255,255,0.10);
-    --stroke2: rgba(255,255,255,0.14);
-    --text: rgba(233,238,252,0.92);
-    --muted: rgba(233,238,252,0.66);
-    --shadow: 0 18px 60px rgba(0,0,0,0.45);
-  }
-
-  body{
-    background: radial-gradient(1200px 800px at 15% 10%, rgba(106, 90, 255, 0.18), transparent 55%),
-                radial-gradient(1200px 800px at 85% 20%, rgba(255, 64, 129, 0.14), transparent 60%),
-                linear-gradient(180deg, var(--bg0), var(--bg1));
-    color: var(--text);
-  }
-
-  .brand{
-    border:1px solid var(--stroke);
-    background: linear-gradient(180deg, rgba(20,26,48,0.78), rgba(12,16,32,0.62));
-    box-shadow: var(--shadow);
-    border-radius: 18px;
-  }
-
-  .card{
-    background: linear-gradient(180deg, var(--card), var(--card2));
-    border: 1px solid var(--stroke);
-    box-shadow: var(--shadow);
-    border-radius: 18px;
-  }
-
-  .section{
-    border: 1px solid var(--stroke);
-    border-radius: 18px;
-    background: linear-gradient(180deg, rgba(18,24,44,0.55), rgba(13,18,34,0.35));
-  }
-
-  h4{
-    letter-spacing: .2px;
-  }
-
-  .kpis{
-    gap: 14px;
-  }
-  .kpi{
-    border: 1px solid var(--stroke);
-    background: linear-gradient(180deg, rgba(15,20,36,0.62), rgba(10,14,26,0.42));
-    border-radius: 16px;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.35);
-  }
-  .kpi .k{
-    color: var(--muted);
-    font-weight: 900;
-    letter-spacing: .25px;
-  }
-  .kpi .v{
-    font-size: 36px;
-    font-weight: 950;
-    letter-spacing: .3px;
-  }
-  .kpi .s{
-    color: rgba(233,238,252,0.58);
-  }
-
-  .table{
-    border-radius: 16px;
-    overflow: hidden;
-    border:1px solid var(--stroke);
-  }
-  .table th{
-    background: rgba(8,12,22,0.65);
-    color: rgba(233,238,252,0.78);
-    letter-spacing: .2px;
-    text-transform: uppercase;
-    font-size: 12px;
-  }
-  .table td{
-    background: rgba(14,18,34,0.40);
-  }
-  .table tr:hover td{
-    background: rgba(106, 90, 255, 0.10);
-  }
-
-  .callout{
-    margin-top: 12px;
-    border-radius: 18px;
-    padding: 14px 14px;
-    border:1px solid var(--stroke);
-    background: linear-gradient(180deg, rgba(106, 90, 255, 0.10), rgba(255, 64, 129, 0.06));
-  }
-  .calloutTitle{
-    font-weight: 950;
-    letter-spacing: .2px;
-  }
-  .calloutBody{
-    margin-top: 8px;
-    color: rgba(233,238,252,0.86);
-    line-height: 1.45;
-  }
-  .pillRow{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
-  }
-  .pill{
-    display:inline-flex;
-    align-items:center;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-weight: 950;
-    border:1px solid var(--stroke2);
-    background: rgba(9,12,22,0.55);
-    letter-spacing:.2px;
-  }
-  .pill.red{ color: rgba(255,120,120,0.95); }
-  .pill.amber{ color: rgba(255,206,120,0.95); }
-  .pill.green{ color: rgba(140,255,190,0.95); }
-
-  .btn.primary{
-    box-shadow: 0 14px 40px rgba(106, 90, 255, 0.24);
-  }
-
-  .footerVersion{
-    opacity:.65;
-    font-size:12px;
-    padding:10px 4px;
-  }
-
-  /* Make the map visually stronger on big screens */
-  #map{
-    border-radius: 18px !important;
-    border:1px solid var(--stroke) !important;
-    box-shadow: var(--shadow) !important;
-  }
-
-
-  /* ===== Presenter UX (v8.4) ===== */
-  .riskBanner{
-    display:flex; align-items:center; justify-content:space-between;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.10);
-    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(12,16,32,0.30));
-    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-    margin-bottom: 12px;
-  }
-  .riskLeft{ display:flex; align-items:center; gap: 12px; }
-  .riskLights{ display:flex; gap: 8px; }
-  .riskLights .light{
-    width: 14px; height: 14px; border-radius: 999px;
-    border:1px solid rgba(255,255,255,0.18);
-    opacity: .35;
-  }
-  .riskLights .light.red{ background: rgba(255,80,80,0.85); }
-  .riskLights .light.amber{ background: rgba(255,190,70,0.85); }
-  .riskLights .light.green{ background: rgba(120,255,170,0.85); }
-  .riskLights .on{ opacity: 1; box-shadow: 0 0 22px rgba(255,255,255,0.18); }
-  .riskTitle{ font-weight: 950; letter-spacing: .2px; font-size: 16px; }
-  .riskSub{ color: rgba(233,238,252,0.78); font-weight: 750; margin-top: 2px; }
-  .riskRight{ display:flex; gap: 10px; flex-wrap:wrap; }
-
-  body.presenter .app{ grid-template-columns: 1fr; }
-  body.presenter .panel{ display:none; }
-  body.presenter .report{ padding: 18px 22px; }
-  body.presenter .kpi .v{ font-size: 46px; }
-  body.presenter #map{ height: 520px !important; }
-  body.presenter #readoutBox{ font-size: 16px; line-height: 1.55; }
-  body.presenter .table td{ font-size: 14px; }
-  body.presenter .riskTitle{ font-size: 18px; }
-
-  </style>
+</style>
 
   <!-- Leaflet (map) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -595,8 +418,8 @@
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
         <div>
-          <h1>Wizz Network Weather & Delay Brief</h1>
-          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.6-metar-compare</span></small>
+          <h1>Wizz NOP Weather Brief</h1>
+          <small>Client-side parsing → English management report (DOCX/PPTX export) | <span class="mono" id="verTag">v8.6-metar-compare-stable</span></small>
         </div>
       </div>
 
@@ -720,25 +543,7 @@
           </div>
         </div>
 
-        
-        <div class="riskBanner" id="riskBanner" style="display:none;">
-          <div class="riskLeft">
-            <div class="riskLights" aria-hidden="true">
-              <span class="light red" id="lightRed"></span>
-              <span class="light amber" id="lightAmber"></span>
-              <span class="light green" id="lightGreen"></span>
-            </div>
-            <div>
-              <div class="riskTitle">Network disruption risk: <span id="riskLevel">—</span></div>
-              <div class="riskSub" id="riskSub">—</div>
-            </div>
-          </div>
-          <div class="riskRight">
-            <button class="btn primary" id="btnPresenter">Presenter mode</button>
-<button class="btn" id="btnFull">Fullscreen</button>
-          </div>
-        </div>
-<div class="kpis">
+        <div class="kpis">
           <div class="kpi">
             <div class="k">Matched stations</div>
             <div class="v" id="kMatched">0</div>
@@ -760,24 +565,10 @@
             <div class="s">Winter / Wind / Convective / Low-vis</div>
           </div>
         </div>
-        <div class="callout">
-          <div class="calloutTitle">How to read this (for non-technical stakeholders)</div>
-          <div class="calloutBody">
-            <div class="pillRow">
-              <span class="pill red">RED</span> High likelihood of disruption/delays (e.g., strong winds, storms, freezing fog, very low visibility).
-              <span class="pill amber">AMBER</span> Medium likelihood (operational constraints possible).
-              <span class="pill green">GREEN</span> Minor or localized impact.
-            </div>
-            <div style="margin-top:10px; opacity:.92;">
-              “Plain-language” translates aviation shorthand into meeting-ready statements. Use “Raw text” only if you need the exact NOP wording.
-            </div>
-          </div>
-        </div>
-
 
         <div class="grid2">
           <div class="card">
-            <h4>Executive summary (30–60s readout)</h4>
+            <h4>Executive summary</h4>
             <ul class="bullets" id="execBullets">
               <li>Load your ICAO list and the daily NOP PDF, then build the report.</li>
               <li>If URL fetch fails due to CORS, use file upload.</li>
@@ -863,7 +654,8 @@
           Disclaimer: leadership summary for situational awareness. For operational decisions, use validated MET/ATM sources and company procedures.
         </div>
       </div>
-    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.6-metar-compare</span></div>
+    <div style="opacity:.6; font-size:12px; padding:10px 2px;">Version: <span class="mono" id="verFooter">v8.6-metar-compare-stable</span></div>
+<div class="footerVersion">Version: <span class="mono">v8.6-metar-compare-stable</span></div>
 </main>
   </div>
 
@@ -935,100 +727,6 @@ function nowLocal(){
     const pad = (n) => String(n).padStart(2,"0");
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
-
-  // ===== Presenter / Teleprompter =====
-  function togglePresenterMode(){
-    document.body.classList.toggle("presenter");
-    setStatus("buildStatus", document.body.classList.contains("presenter") ? "Presenter mode ON." : "Presenter mode OFF.");
-  }
-
-  async function goFullscreen(){
-    try{
-      const el = document.documentElement;
-      if (!document.fullscreenElement){
-        await el.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch(e){
-      console.warn(e);
-      setStatus("buildStatus", "Fullscreen not available (browser policy).");
-    }
-  }
-
-  function computeNetworkRisk(reds, ambs){
-    // Simple, explainable heuristic for management use
-    if (reds >= 3) return { level: "HIGH", light: "red" };
-    if (reds >= 1) return { level: "MEDIUM", light: "amber" };
-    if (ambs >= 4) return { level: "MEDIUM", light: "amber" };
-    return { level: "LOW", light: "green" };
-  }
-
-  function setRiskLights(which){
-    const r = document.getElementById("lightRed");
-    const a = document.getElementById("lightAmber");
-    const g = document.getElementById("lightGreen");
-    [r,a,g].forEach(x => x && x.classList.remove("on"));
-    if (which === "red" && r) r.classList.add("on");
-    if (which === "amber" && a) a.classList.add("on");
-    if (which === "green" && g) g.classList.add("on");
-  }
-
-  function updateRiskBanner(reds, ambs, matched, synopsis){
-    const banner = document.getElementById("riskBanner");
-    if (!banner) return;
-    const risk = computeNetworkRisk(reds, ambs);
-    const levelEl = document.getElementById("riskLevel");
-    const subEl = document.getElementById("riskSub");
-
-    const drivers = driversFromItems(matched);
-    const top3 = matched.slice(0,3).map(x => {
-      const st = stationLabel(x.icao);
-      const name = st.station !== "—" ? st.station : x.icao;
-      return `${name} (${x.icao})`;
-    }).join(", ");
-
-    if (levelEl) levelEl.textContent = risk.level;
-    if (subEl) subEl.textContent = `${drivers}. Focus: ${top3 || "—"}. ${synopsis ? "Synopsis: " + synopsis : ""}`;
-    setRiskLights(risk.light);
-    banner.style.display = "flex";
-  }
-
-  // Teleprompter overlay
-  let TELE_SPEED = 55; // px/s
-  let TELE_RAF = null;
-  let TELE_LAST = 0;
-
-
-  // ===== Teleprompter speech (built-in Web Speech API) =====
-  let SPEAK_UTT = null;
-      stopSpeak();
-      const t = (text || "").trim();
-      if (!t){
-        setStatus("buildStatus", "Nothing to speak (build the report first).");
-        return;
-      }
-      SPEAK_UTT = new SpeechSynthesisUtterance(t);
-      SPEAK_UTT.rate = 1.0;
-      SPEAK_UTT.pitch = 1.0;
-      SPEAK_UTT.onend = () => { SPEAKING = false; };
-      SPEAK_UTT.onerror = () => { SPEAKING = false; };
-      SPEAKING = true;
-      window.speechSynthesis.speak(SPEAK_UTT);
-    } catch(e){
-      console.warn(e);
-      setStatus("buildStatus", "Speech failed (browser policy).");
-    }
-  }
-    } catch(e){}
-    SPEAKING = false;
-    SPEAK_UTT = null;
-  }
-    }
-  }
-
-
-
   function todayUtcYmd(){
     const d = new Date();
     const y = d.getUTCFullYear();
@@ -2023,10 +1721,7 @@ async function buildReport(){
 
     // Map + management readout
     renderMap(top);
-    const readout = buildReadout(matched, synopsis, enroute);
-    LAST_READOUT = readout || "";
-    if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = readout;
-    updateRiskBanner(reds, ambs, matched, synopsis);
+    if (document.getElementById("readoutBox")) document.getElementById("readoutBox").textContent = buildReadout(matched, synopsis, enroute);
 
 
     // Diagnostics
@@ -2043,10 +1738,7 @@ async function buildReport(){
     $("debugBox").textContent = dbg;
 
     setStatus("buildStatus", "Report built.");
-    try{
-      const auto = document.getElementById("chkAutoMetar");
-      if (auto && auto.checked) fetchLiveMetars();
-    } catch(e){}
+    try{ const a=document.getElementById("chkAutoMetar"); if (a && a.checked) fetchLiveMetars(); } catch(e){}
 
     // JS heartbeat
     if (document.getElementById("buildStatus")) document.getElementById("buildStatus").textContent = "Report built. (JS OK)";
@@ -2153,7 +1845,7 @@ async function buildReport(){
     const ta = document.getElementById("metarPaste");
     if (ta) ta.value = "";
     const tb = document.getElementById("metarTbody");
-    if (tb) tb.innerHTML = '<tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>';
+    if (tb) tb.innerHTML = '<tr><td colspan="9" style="opacity:.7;">No METAR loaded.</td></tr>';
     const st = document.getElementById("metarStatus");
     if (st) st.textContent = "—";
   });
@@ -2166,9 +1858,7 @@ async function buildReport(){
   if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
   if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => { const t=$("copyModalText"); const ok = await tryCopyText(t ? t.value : ""); setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C."); });
   if ($("btnPrint")) $("btnPrint").addEventListener("click", () => window.print());
-  if ($("btnPresenter")) $("btnPresenter").addEventListener("click", togglePresenterMode);
-  if ($("btnFull")) $("btnFull").addEventListener("click", goFullscreen);
-if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
+  if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
   if ($("btnPptx")) $("btnPptx").addEventListener("click", exportPptx);
   if ($("btnAutoLoad")) $("btnAutoLoad").addEventListener("click", autoLoadFromRepo);
   // Auto-load repo files on startup (best-effort)
@@ -2178,13 +1868,8 @@ if ($("btnDocx")) $("btnDocx").addEventListener("click", exportDocx);
   window.addEventListener("DOMContentLoaded", () => {
     if ($("btnCloseModal")) $("btnCloseModal").addEventListener("click", closeCopyModal);
     if ($("copyModalBackdrop")) $("copyModalBackdrop").addEventListener("click", closeCopyModal);
-    if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } 
-    // Teleprompter controls
-    document.addEventListener("keydown", teleEscapeHandler);
-if (t) t.style.fontSize = v + "px";
-    });
-
-  });if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
+    if ($("btnSelectAll")) $("btnSelectAll").addEventListener("click", () => { const t=$("copyModalText"); if (t){ t.focus(); t.select(); } });
+    if ($("btnCopyModal")) $("btnCopyModal").addEventListener("click", async () => {
       const t=$("copyModalText");
       const ok = await tryCopyText(t ? t.value : "");
       setStatus("buildStatus", ok ? "Copied from copy window." : "Copy failed: select all and press Ctrl+C.");
@@ -2288,18 +1973,39 @@ if (t) t.style.fontSize = v + "px";
 
 
 
-  // ===== Live METAR cross-check =====
+  // ===== Live METAR cross-check (v8.6) =====
   function getAffectedIcaosFromHotspots(){
     const rows = Array.from(document.querySelectorAll("#hotBody tr"));
     const icaos = [];
     for (const tr of rows){
-      const tds = tr.querySelectorAll("td");
-      if (!tds || tds.length < 3) continue;
-      const txt = (tds[2].innerText || "").trim();
-      const icao = (txt.split(/\s+/)[0] || "").toUpperCase();
-      if (/^[A-Z]{4}$/.test(icao)) icaos.push(icao);
+      const t = (tr.innerText || "").toUpperCase();
+      const m = t.match(/\b[A-Z]{4}\b/);
+      if (m) icaos.push(m[0]);
     }
-    return Array.from(new Set(icaos));
+    return uniq(icaos);
+  }
+
+  function forecastSignalsForIcao(icao){
+    // Use drivers + snippet from the matched item (NOP PDF).
+    const item = (LAST_MATCHED || []).find(x => x.icao === icao);
+    const drivers = (item && item.drivers) ? String(item.drivers).toUpperCase() : "";
+    const snip = (item && item.snippet) ? String(item.snippet).toUpperCase() : "";
+    const sig = new Set();
+
+    // Driver-based signals
+    if (drivers.includes("WIND")) sig.add("WIND");
+    if (drivers.includes("LOW") && drivers.includes("VIS")) sig.add("LOW VIS");
+    if (drivers.includes("CONVECT")) sig.add("CONVECTIVE");
+    if (drivers.includes("WINTER") || drivers.includes("ICE") || drivers.includes("SN") || drivers.includes("FZRA")) sig.add("WINTER");
+
+    // Snippet-based (TAF/METAR tokens)
+    if (/\b(FG|FZFG|BR)\b/.test(snip)) sig.add("FOG/BR");
+    if (/\b(FZRA|FZDZ)\b/.test(snip)) sig.add("FREEZING PRECIP");
+    if (/\bSN\b/.test(snip)) sig.add("SNOW");
+    if (/\bTS\b/.test(snip) || /\bTSRA\b/.test(snip) || /\bCB\b/.test(snip)) sig.add("TS/CB");
+    if (/\bRA\b/.test(snip) || /\bSHRA\b/.test(snip)) sig.add("RAIN/SH");
+
+    return Array.from(sig);
   }
 
   function parseMetarLine(line){
@@ -2322,84 +2028,102 @@ if (t) t.style.fontSize = v + "px";
 
     let ceil = "—";
     const ceilM = rest.match(/\b(VV|BKN|OVC)\d{3}\b/g);
-    if (ceilM && ceilM.length){
-      ceil = ceilM[0];
-    }
+    if (ceilM && ceilM.length) ceil = ceilM[0];
 
     const time = (rest.match(/\b\d{6}Z\b/) || [])[0] || "—";
 
     return { icao, time, wind, vis, wx, ceil, raw: s };
   }
 
-  function metarConditionFlags(metar){
-    const raw = metar.raw || "";
+  function metarFlags(raw){
+    raw = (raw || "").toUpperCase();
     let gust = 0;
     const g = raw.match(/G(\d{2,3})KT/);
     if (g) gust = parseInt(g[1],10) || 0;
 
+    let windSpd = 0;
+    const w = raw.match(/\b(?:VRB|\d{3})(\d{2,3})(?:G\d{2,3})?KT\b/);
+    if (w) windSpd = parseInt(w[1],10) || 0;
+
     let visM = null;
     const vm = raw.match(/\b(9999|\d{4})\b/);
     if (vm){
-      const v = vm[1] === "9999" ? 9999 : (parseInt(vm[1],10) || null);
-      visM = v;
+      visM = (vm[1] === "9999") ? 9999 : (parseInt(vm[1],10) || null);
     }
 
     const hasFG = /\bFG\b/.test(raw) || /\bFZFG\b/.test(raw);
+    const hasBR = /\bBR\b/.test(raw);
     const hasFZ = /\bFZRA\b/.test(raw) || /\bFZDZ\b/.test(raw);
     const hasSN = /\bSN\b/.test(raw) || /\bSHSN\b/.test(raw);
     const hasTS = /\bTS\b/.test(raw) || /\bTSRA\b/.test(raw);
+    const hasCB = /\bCB\b/.test(raw);
 
-    return { gust, visM, hasFG, hasFZ, hasSN, hasTS };
+    return { gust, windSpd, visM, hasFG, hasBR, hasFZ, hasSN, hasTS, hasCB };
   }
 
-  function compareForecastToLive(drivers, metar){
-    const d = (drivers || "").toUpperCase();
-    const f = metarConditionFlags(metar);
+  function evaluateForecastVsMetar(signals, metar){
+    const sig = new Set((signals || []).map(s => String(s).toUpperCase()));
+    const f = metarFlags(metar.raw || "");
 
-    const checks = [];
-    if (d.includes("LOW") && d.includes("VIS")){
-      if (f.visM !== null && f.visM <= 1500) checks.push({label:"Low vis confirmed", cls:"bad"});
-      else if (f.hasFG) checks.push({label:"Fog present", cls:"warn"});
-      else checks.push({label:"Low vis not observed", cls:"ok"});
-    }
-    if (d.includes("WIND")){
-      if (f.gust >= 35) checks.push({label:`Gusts ${f.gust}kt`, cls:"bad"});
-      else if (f.gust >= 25) checks.push({label:`Gusts ${f.gust}kt`, cls:"warn"});
-      else checks.push({label:"No strong gusts", cls:"ok"});
-    }
-    if (d.includes("CONVECT") || d.includes("TS")){
-      if (f.hasTS) checks.push({label:"TS observed", cls:"bad"});
-      else checks.push({label:"No TS in METAR", cls:"ok"});
-    }
-    if (d.includes("WINTER") || d.includes("SN") || d.includes("FZRA") || d.includes("ICE")){
-      if (f.hasFZ) checks.push({label:"Freezing precip", cls:"bad"});
-      else if (f.hasSN) checks.push({label:"Snow reported", cls:"warn"});
-      else checks.push({label:"No wintry precip", cls:"ok"});
+    const badges = [];
+
+    // Low visibility
+    if (sig.has("LOW VIS") || sig.has("FOG/BR")){
+      if (f.visM !== null && f.visM <= 1500) badges.push({t:`Low vis confirmed (${f.visM}m)`, c:"bad"});
+      else if (f.hasFG || f.hasBR) badges.push({t:"Fog/BR present", c:"warn"});
+      else badges.push({t:"Low vis not observed", c:"ok"});
     }
 
-    if (!checks.length) return '<span class="badge ok">No rule</span>';
-    return checks.map(c => `<span class="badge ${c.cls}">${c.label}</span>`).join(" ");
+    // Wind
+    if (sig.has("WIND")){
+      if (f.gust >= 35) badges.push({t:`Strong gusts (${f.gust}kt)`, c:"bad"});
+      else if (f.gust >= 25 || f.windSpd >= 25) badges.push({t:`Elevated wind (${(f.gust || f.windSpd)}kt)`, c:"warn"});
+      else badges.push({t:"Wind OK", c:"ok"});
+    }
+
+    // Convective
+    if (sig.has("CONVECTIVE") || sig.has("TS/CB")){
+      if (f.hasTS) badges.push({t:"TS observed", c:"bad"});
+      else if (f.hasCB) badges.push({t:"CB reported", c:"warn"});
+      else badges.push({t:"No TS/CB in METAR", c:"ok"});
+    }
+
+    // Winter
+    if (sig.has("WINTER") || sig.has("SNOW") || sig.has("FREEZING PRECIP")){
+      if (f.hasFZ) badges.push({t:"Freezing precip observed", c:"bad"});
+      else if (f.hasSN) badges.push({t:"Snow observed", c:"warn"});
+      else badges.push({t:"No wintry precip in METAR", c:"ok"});
+    }
+
+    if (!badges.length) return '<span class="badge muted">No evaluation rule</span>';
+    return badges.map(b => `<span class="badge ${b.c}">${b.t}</span>`).join(" ");
   }
 
   function renderMetarTable(metarMap){
     const tb = document.getElementById("metarTbody");
+    const st = document.getElementById("metarStatus");
     if (!tb) return;
 
     const icaos = getAffectedIcaosFromHotspots();
     if (!icaos.length){
-      tb.innerHTML = '<tr><td colspan="8" style="opacity:.7;">No affected airports in the current view.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="9" style="opacity:.7;">No affected airports in the current view.</td></tr>';
+      if (st) st.textContent = "No affected airports to compare.";
       return;
     }
 
     const rows = [];
+    let ok=0, warn=0, bad=0, missing=0;
+
     for (const icao of icaos){
       const metar = metarMap[icao] || null;
-      const item = (LAST_MATCHED || []).find(x => x.icao === icao);
-      const drivers = item ? (item.drivers || "") : "";
+      const sig = forecastSignalsForIcao(icao);
+      const sigHtml = sig.length ? sig.map(s => `<span class="badge muted">${escapeHtml(s)}</span>`).join(" ") : '<span class="badge muted">—</span>';
 
       if (!metar){
+        missing += 1;
         rows.push(`<tr>
           <td class="mono">${icao}</td>
+          <td>${sigHtml}</td>
           <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
           <td><span class="badge warn">No METAR</span></td>
           <td class="mono" style="opacity:.7;">—</td>
@@ -2407,41 +2131,32 @@ if (t) t.style.fontSize = v + "px";
         continue;
       }
 
-      const cmp = compareForecastToLive(drivers, metar);
+      const evalHtml = evaluateForecastVsMetar(sig, metar);
+      if (evalHtml.includes("bad")) bad += 1
+      else if (evalHtml.includes("warn")) warn += 1
+      else ok += 1
+
       rows.push(`<tr>
         <td class="mono">${icao}</td>
+        <td>${sigHtml}</td>
         <td class="mono">${metar.time}</td>
         <td class="mono">${metar.wind}</td>
         <td class="mono">${metar.vis}</td>
         <td class="mono">${metar.wx}</td>
         <td class="mono">${metar.ceil}</td>
-        <td>${cmp}</td>
+        <td>${evalHtml}</td>
         <td class="mono">${escapeHtml(metar.raw)}</td>
       </tr>`);
     }
 
-    tb.innerHTML = rows.join("") || '<tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>';
-    // Update summary counts
-    const st = document.getElementById("metarStatus");
-    if (st){
-      const htmlRows = Array.from(tb.querySelectorAll("tr"));
-      let missing=0, bad=0, warn=0, ok=0;
-      for (const r of htmlRows){
-        const t = (r.innerText || "");
-        if (t.includes("No METAR")) missing++;
-        if (t.includes("confirmed") || t.includes("Gusts") || t.includes("TS observed") || t.includes("Freezing")) bad++;
-        if (t.includes("Fog present") || t.includes("Snow reported") || t.includes("Gusts 25")) warn++;
-        if (t.includes("not observed") || t.includes("No TS") || t.includes("No wintry") || t.includes("No strong gusts")) ok++;
-      }
-      st.textContent = `METAR compare: ${ok} OK · ${warn} WATCH · ${bad} CONFIRMS · ${missing} missing`;
-    }
-
+    tb.innerHTML = rows.join("") || '<tr><td colspan="9" style="opacity:.7;">No METAR loaded.</td></tr>';
+    if (st) st.textContent = `METAR compare: ${ok} OK · ${warn} WATCH · ${bad} CONFIRMS · ${missing} missing`;
   }
 
   async function fetchLiveMetars(){
-    const icaos = getAffectedIcaosFromHotspots();
     const st = document.getElementById("metarStatus");
-    if (st) st.textContent = "Fetching…";
+    const icaos = getAffectedIcaosFromHotspots();
+    if (st) st.textContent = "Fetching live METARs…";
     if (!icaos.length){
       if (st) st.textContent = "No affected airports to fetch.";
       return;
@@ -2463,7 +2178,7 @@ if (t) t.style.fontSize = v + "px";
       if (st) st.textContent = `Loaded ${Object.keys(map).length} METAR(s) for ${icaos.length} affected airport(s).`;
     } catch(e){
       console.warn(e);
-      if (st) st.textContent = "Live METAR fetch failed (likely network/CORS). Use “Paste METARs instead”.";
+      if (st) st.textContent = "Live METAR fetch failed (likely CORS/network). Use “Paste METARs instead”.";
     }
   }
 
@@ -2480,7 +2195,6 @@ if (t) t.style.fontSize = v + "px";
     renderMetarTable(map);
     if (st) st.textContent = `Loaded ${Object.keys(map).length} METAR(s) from pasted text.`;
   }
-
 </script>
 
   <!-- Copy / prompt modal (clipboard fallback) -->
@@ -2501,37 +2215,23 @@ if (t) t.style.fontSize = v + "px";
       </div>
     </div>
   </div>
-<div class="teleControls">
-
-
-
-<div class="teleSlider">
-          <div class="teleLbl">Speed</div>
-</div>
-        <div class="teleSlider">
-          <div class="teleLbl">Text</div>
-</div>
-
-</div>
-    </div>
-    <div class="teleBody" id="teleBody">
-      <pre id="teleText">—</pre>
-    </div>
-  </div>
 
 </body>
 </html
       <div class="card" style="margin-top:12px;">
-        <h4>NOP forecast vs Live METAR (affected airports only)</h4>
+        <h4>NOP forecast vs live METAR (affected airports only)</h4>
         <div class="hint">
-          Optional: pulls the latest METARs for the airports shown in “Affected Wizz airports”.
-          Source: aviationweather.gov (public). If your corporate network blocks it, use “Paste METARs”.
+          This section compares what the NOP PDF indicates (drivers + snippet/TAF-like text) against the latest observed METAR.
+          If live fetch is blocked by your network/CORS, paste METAR lines instead.
         </div>
 
         <div class="row" style="margin-top:10px; gap:10px; flex-wrap:wrap;">
           <button class="btn" id="btnFetchMetar">Fetch live METARs</button>
           <button class="btn" id="btnToggleMetarPaste">Paste METARs instead</button>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;"><input type="checkbox" id="chkAutoMetar" checked /> Auto-fetch after “Build report”</label>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:800; opacity:.9;">
+            <input type="checkbox" id="chkAutoMetar" checked />
+            Auto-run after “Build report”
+          </label>
           <div class="status" id="metarStatus" style="flex:1 1 auto;">—</div>
         </div>
 
@@ -2549,17 +2249,18 @@ if (t) t.style.fontSize = v + "px";
             <thead>
               <tr>
                 <th>ICAO</th>
-                <th>Observed</th>
+                <th>Forecast signals (NOP)</th>
+                <th>Observed (METAR time)</th>
                 <th>Wind</th>
                 <th>Vis</th>
                 <th>WX</th>
                 <th>Ceiling</th>
-                <th>Forecast vs live (evaluation)</th>
+                <th>Evaluation</th>
                 <th>Raw METAR</th>
               </tr>
             </thead>
             <tbody id="metarTbody">
-              <tr><td colspan="8" style="opacity:.7;">No METAR loaded.</td></tr>
+              <tr><td colspan="9" style="opacity:.7;">No METAR loaded.</td></tr>
             </tbody>
           </table>
         </div>
