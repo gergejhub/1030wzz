@@ -6,31 +6,10 @@
   <title>Wizz NOP Weather Brief — PDF → Management Report (EN)</title>
 
   <!-- PDF.js (client-side PDF text extraction) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.min.js"></script>
 
   <script>
-    // Fallback loader if a CDN is blocked (adblock, corporate proxy, SRI issues).
-    (function ensurePdfJs(){
-      function load(src){
-        return new Promise((resolve, reject) => {
-          var s = document.createElement('script');
-          s.src = src;
-          s.onload = resolve;
-          s.onerror = reject;
-          document.head.appendChild(s);
-        });
-      }
-      async function go(){
-        if (window.pdfjsLib) return;
-        try { await load("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.js"); } catch(e){}
-        if (!window.pdfjsLib){
-          try { await load("https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.min.js"); } catch(e){}
-        }
-      }
-      go();
-    })();
-
-    // Global error surface (so failures don't look like "nothing happens")
+// Global error surface (so failures don't look like "nothing happens")
     window.addEventListener("error", function(ev){
       var msg = "[JS error] " + (ev.message || "Unknown") + (ev.filename ? (" @ " + ev.filename) : "");
       var el = document.getElementById("pdfStatus") || document.getElementById("buildStatus");
@@ -507,7 +486,7 @@
           <button class="btn" id="btnPptx">Export PPTX (1 slide)</button>
         </div>
 
-        <div class="status" id="buildStatus">Ready.</div>
+        <div class="status" id="buildStatus">Ready. (JS loading…)</div>
 
         <div class="section" style="margin-top:12px;">
           <h3>Severity legend</h3>
@@ -629,7 +608,7 @@
 
 <script>
   // PDF.js worker
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.js";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.worker.min.js";
 
   // State
   let WIZZ_ICAOS = new Set();
@@ -1197,6 +1176,8 @@
     $("debugBox").textContent = dbg;
 
     setStatus("buildStatus", "Report built.");
+    // JS heartbeat
+    if (document.getElementById("buildStatus")) document.getElementById("buildStatus").textContent = "Report built. (JS OK)";
   }
 
   // UI events
