@@ -401,6 +401,7 @@
 
       <div class="section">
         <h3>1) Wizz network inputs</h3>
+        <div class="hint">For daily use: the app auto-loads <span style="font-family:var(--mono)">wizz_icaos.txt</span> from the repo root. Manual upload is only a fallback.</div>
 
         <label>Wizz-relevant stations (TXT, 1 ICAO per line)</label>
         <input id="icaoFile" type="file" accept=".txt,text/plain" />
@@ -414,7 +415,7 @@
         </div>
 
 
-        <label style="margin-top:12px;">Optional station mapping (CSV or JSON)</label>
+        <label style="margin-top:12px;">Optional: station names (CSV or JSON)</label>
         <div class="hint">
           CSV format: <span style="font-family:var(--mono)">ICAO,Name,Country,Type,Lat,Lon</span> (Type optional; Lat/Lon optional).<br/>
           JSON format: [{ "icao":"LHBP","name":"Budapest","country":"HU","type":"BASE","lat":47.439,"lon":19.261 }, ...]
@@ -426,7 +427,7 @@
         </div>
         <div class="status" id="mapStatus">No mapping loaded (ICAO-only display).</div>
 
-        <label style="margin-top:12px;">Optional core bases list (TXT, 1 ICAO per line)</label>
+        <label style="margin-top:12px;">Optional: core bases list (TXT, 1 ICAO per line)</label>
         <input id="baseFile" type="file" accept=".txt,text/plain" />
         <div class="row" style="margin-top:10px;">
           <button class="btn good" id="btnLoadBases">Load bases</button>
@@ -441,25 +442,9 @@
 
       <div class="section">
         <h3>2) NOP PDF input</h3>
-
-        <label>Public PDF URL</label>
-        <label style="margin-top:12px;">Optional CORS proxy (advanced)</label>
-        <div class="hint">
-          If the NOP server blocks cross-origin fetch, you can use a small proxy you control (recommended),
-          e.g., a Cloudflare Worker. Enter the proxy endpoint below (leave empty to disable).
-          Expected formats:
-          <span style="font-family:var(--mono)">https://your-proxy.example/fetch?url=</span> (will append encoded PDF URL)
-        </div>
-        <input id="proxyUrl" type="url" placeholder="https://your-proxy.example/fetch?url=" />
-
-        <input id="pdfUrl" type="url" placeholder="https://.../YYYYMMDD_HHMM.pdf" />
-
-        <div class="row" style="margin-top:10px;">
-          <button class="btn primary" id="btnFetchPdf">Load PDF from URL</button>
-          <button class="btn" id="btnSetToday">Set date to today (UTC)</button>
-        </div>
-
-        <label style="margin-top:12px;">Or upload PDF (if CORS blocks the URL)</label>
+        <label>Upload the daily NOP PDF</label>
+        <div class="hint">Only PDF upload is supported (URL fetch is disabled due to cross-origin restrictions).</div>
+        <label style="margin-top:12px;">Or upload PDF (recommended)</label>
         <input id="pdfFile" type="file" accept="application/pdf" />
         <div class="row" style="margin-top:10px;">
           <button class="btn primary" id="btnLoadPdfFile">Load PDF from file</button>
@@ -577,7 +562,7 @@
         </div>
 
         <div class="card" style="margin-top:12px;">
-          <h4>Top hotspots (Wizz-relevant)</h4>
+          <h4>Affected Wizz airports (most relevant)</h4>
           <div style="overflow:auto;">
             <table class="table" id="hotTable">
               <thead>
@@ -588,11 +573,12 @@
                   <th>Station</th>
                   <th>Time</th>
                   <th>Drivers</th>
+                  <th>Plain-language</th>
                   <th>Snippet</th>
                 </tr>
               </thead>
               <tbody id="hotBody">
-                <tr><td colspan="7" style="color:rgba(233,238,252,0.70); font-weight:700;">No data.</td></tr>
+                <tr><td colspan="8" style="color:rgba(233,238,252,0.70); font-weight:700;">No data.</td></tr>
               </tbody>
             </table>
           </div>
@@ -603,7 +589,7 @@
           <div class="card">
             <h4>Map view (hotspots)</h4>
             <div class="hint" style="margin-bottom:8px;">
-              Coordinates are auto-resolved from a public airport dataset (OurAirports). No manual Lat/Lon upload needed.
+              The map uses auto-resolved airport coordinates from a public dataset. If your corporate network blocks external datasets or map tiles, markers may not display.
             </div>
             <div id="map" style="height:360px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); overflow:hidden;"></div>
           </div>
@@ -617,12 +603,12 @@
         </div>
 
 <div class="card" style="margin-top:12px;">
-          <h4>En-route / airspace signals (extracted)</h4>
+          <h4>Airspace / en-route notes (extracted)</h4>
           <div class="raw" id="enrouteBox">—</div>
         </div>
 
         <div class="card" style="margin-top:12px;">
-          <h4>NOP synopsis (extracted)</h4>
+          <h4>Weather synopsis (extracted)</h4>
           <div class="raw" id="synopsisBox">—</div>
         </div>
 
@@ -760,13 +746,7 @@
     return full.join("\n");
   }
 
-  async function loadPdfFromUrl(url){
-    const r = await fetch(url, { mode: "cors" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    return await r.arrayBuffer();
-  }
-
-  // NOP-specific parsing (heuristics)
+    // NOP-specific parsing (heuristics)
   function extractSection(text, startLabel, endLabels){
     const t = text.replace(/\r/g, "");
     const idx = t.toLowerCase().indexOf(startLabel.toLowerCase());
@@ -920,7 +900,52 @@ return items;
 
 
   // Risk tagging / scoring (heuristic)
-  function scoreAndTag(item){
+  
+  // Plain-language decoder for common aviation weather tokens
+  function explainSnippet(raw){
+    const s = String(raw || "").toUpperCase();
+    const parts = [];
+
+    // Wind e.g. 25020G30KT
+    const w = s.match(/\b(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT\b/);
+    if (w){
+      const dir = w[1] === "VRB" ? "variable" : `${w[1]}°`;
+      const spd = parseInt(w[2],10);
+      const gust = w[4] ? parseInt(w[4],10) : null;
+      parts.push(gust ? `Wind ${dir} ${spd} kt gusting ${gust} kt` : `Wind ${dir} ${spd} kt`);
+    }
+
+    // Low visibility cues
+    if (/\bFZFG\b/.test(s)) parts.push("Freezing fog (very low visibility, icing risk)");
+    else if (/\bFG\b/.test(s)) parts.push("Fog / very low visibility");
+    if (/\bBR\b/.test(s) && !/\bFZFG\b/.test(s)) parts.push("Mist / reduced visibility");
+
+    // Precip / winter
+    if (/\bFZRA\b/.test(s)) parts.push("Freezing rain (high icing / ground ops impact)");
+    if (/\bBLSN\b/.test(s)) parts.push("Blowing snow (drifting, low vis)");
+    if (/\+SN\b/.test(s)) parts.push("Heavy snow");
+    else if (/\bSN\b/.test(s)) parts.push("Snow");
+    if (/\bRASN\b/.test(s)) parts.push("Rain and snow mix");
+    if (/\+RA\b/.test(s)) parts.push("Heavy rain");
+    else if (/\bRA\b/.test(s) || /\bSHRA\b/.test(s)) parts.push("Rain / showers");
+
+    // Convective
+    if (/\bTS\b/.test(s) || /\+TS/.test(s)) parts.push("Thunderstorms (tactical delays/diversions possible)");
+    if (/\bCB\b/.test(s)) parts.push("Cumulonimbus / embedded convection possible");
+
+    // Icing / low cloud hints
+    if (/\bVV(\d{3})\b/.test(s)){
+      const vv = s.match(/\bVV(\d{3})\b/);
+      if (vv) parts.push(`Very low cloud (vertical visibility ${vv[1]}×100 ft)`);
+    }
+
+    // If nothing found, return a short generic
+    if (!parts.length) return "Adverse weather signalled in NOP text (see raw snippet).";
+    // Reduce to 2–3 most important points for lay audience
+    return parts.slice(0,3).join("; ");
+  }
+
+function scoreAndTag(item){
     const s = (item.raw || "").toUpperCase();
     let score = 0;
     const tags = [];
@@ -998,7 +1023,13 @@ return items;
 
   function stationLabel(icao){
     const m = STATION_MAP.get(icao);
-    if (!m) return { station: "—", country: "—", type: "", lat: null, lon: null };
+    if (!m){
+      const info = ICAO_INFO.get(icao);
+      const cached = ICAO_COORDS.get(icao);
+      const station = info && (info.city || info.name) ? `${info.city || ""}${(info.city && info.name) ? " — " : ""}${info.name || ""}`.trim() : "—";
+      const country = info && info.country ? info.country : "—";
+      return { station, country, type: "", lat: cached ? cached.lat : null, lon: cached ? cached.lon : null };
+    }
     const station = m.name || "—";
     const country = m.country || "—";
     const type = (m.type || "").toUpperCase();
@@ -1052,15 +1083,16 @@ return items;
     const execLis = Array.from($("execBullets").querySelectorAll("li")).map(li => "- " + li.innerText);
     const topRows = Array.from($("hotBody").querySelectorAll("tr")).slice(0, 10).map(tr => {
       const tds = tr.querySelectorAll("td");
-      if (tds.length < 7) return null;
+      if (tds.length < 8) return null;
       const sev = tds[0].innerText.split("\n")[0].trim();
       const risk = tds[1].innerText.split("\n")[0].trim();
       const icao = tds[2].innerText.trim();
       const station = tds[3].innerText.trim();
       const time = tds[4].innerText.trim();
       const drivers = tds[5].innerText.trim();
-      const snip = tds[6].innerText.trim();
-      return `- ${icao} | ${sev}/${risk} | ${time} | ${drivers} | ${station} | ${snip}`;
+      const plain = tds[6].innerText.trim();
+      const snip = tds[7].innerText.trim();
+      return `- ${icao} | ${sev}/${risk} | ${time} | ${drivers} | ${station} | ${plain} | ${snip}`;
     }).filter(Boolean);
 
     const text = [
@@ -1101,7 +1133,7 @@ return items;
       // Table rows
       const rows = Array.from($("hotBody").querySelectorAll("tr")).map(tr => {
         const tds = tr.querySelectorAll("td");
-        if (tds.length < 7) return null;
+        if (tds.length < 8) return null;
         return Array.from(tds).map(td => td.innerText.replace(/\s+/g," ").trim());
       }).filter(Boolean);
 
@@ -1111,7 +1143,7 @@ return items;
 
       const tableRows = [
         new TableRow({
-          children: ["Severity","Delay risk","ICAO","Station","Time","Drivers","Snippet"].map(h =>
+          children: ["Severity","Delay risk","ICAO","Station","Time","Drivers","Plain-language","Snippet"].map(h =>
             new TableCell({
               children: [new Paragraph({ children:[ new TextRun({ text:h, bold:true }) ] })],
             })
@@ -1130,11 +1162,11 @@ return items;
             ...exec.map(x => new Paragraph({ text: "• " + x })),
             new Paragraph({ text: "Recommended operational posture", heading: HeadingLevel.HEADING_2 }),
             ...reco.map(x => new Paragraph({ text: "• " + x })),
-            new Paragraph({ text: "Top hotspots (Wizz-relevant)", heading: HeadingLevel.HEADING_2 }),
+            new Paragraph({ text: "Affected Wizz airports (most relevant)", heading: HeadingLevel.HEADING_2 }),
             new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } }),
-            new Paragraph({ text: "En-route / airspace signals (extracted)", heading: HeadingLevel.HEADING_2 }),
+            new Paragraph({ text: "Airspace / en-route notes (extracted)", heading: HeadingLevel.HEADING_2 }),
             new Paragraph({ text: enroute }),
-            new Paragraph({ text: "NOP synopsis (extracted)", heading: HeadingLevel.HEADING_2 }),
+            new Paragraph({ text: "Weather synopsis (extracted)", heading: HeadingLevel.HEADING_2 }),
             new Paragraph({ text: synopsis }),
             new Paragraph({ text: "Disclaimer: leadership summary for situational awareness. Operational decisions require validated MET/ATM sources and company procedures.", spacing: { before: 240 } }),
           ]
@@ -1182,7 +1214,7 @@ return items;
 
       const rows = Array.from($("hotBody").querySelectorAll("tr")).slice(0, 9).map(tr => {
         const tds = tr.querySelectorAll("td");
-        if (tds.length < 7) return null;
+        if (tds.length < 8) return null;
         const sev = tds[0].innerText.split("\n")[0].trim();
         const risk = tds[1].innerText.split("\n")[0].trim();
         const icao = tds[2].innerText.trim();
@@ -1214,21 +1246,23 @@ return items;
   // Uses OurAirports CSV (public dataset) via raw.githubusercontent.com.
   // Caches a small lookup map in localStorage to avoid repeated downloads.
   let ICAO_COORDS = new Map(); // ICAO -> {lat, lon}
+  let ICAO_INFO = new Map();  // ICAO -> {name, city, country}
 
   function loadCoordsFromStorage(){
     try{
-      const raw = localStorage.getItem("wizz_icao_coords_v1");
+      const raw = localStorage.getItem("wizz_icao_coords_v2");
       if (!raw) return false;
       const obj = JSON.parse(raw);
-      ICAO_COORDS = new Map(Object.entries(obj).map(([k,v]) => [k, v]));
+      ICAO_COORDS = new Map(Object.entries(obj.coords || obj).map(([k,v]) => [k, v]));
+      if (obj.info) ICAO_INFO = new Map(Object.entries(obj.info).map(([k,v]) => [k, v]));
       return true;
     } catch(e){ return false; }
   }
 
   function saveCoordsToStorage(){
     try{
-      const obj = Object.fromEntries(ICAO_COORDS.entries());
-      localStorage.setItem("wizz_icao_coords_v1", JSON.stringify(obj));
+      const obj = { coords: Object.fromEntries(ICAO_COORDS.entries()), info: Object.fromEntries(ICAO_INFO.entries()) };
+      localStorage.setItem("wizz_icao_coords_v2", JSON.stringify(obj));
     } catch(e){}
   }
 
@@ -1296,6 +1330,9 @@ return items;
     const idxIdent = header.indexOf("ident");
     const idxLat = header.indexOf("latitude_deg");
     const idxLon = header.indexOf("longitude_deg");
+    const idxName = header.indexOf("name");
+    const idxMunicip = header.indexOf("municipality");
+    const idxCountry = header.indexOf("iso_country");
     if (idxIdent < 0 || idxLat < 0 || idxLon < 0) throw new Error("Unexpected OurAirports CSV format.");
 
     const need = new Set(missing);
@@ -1311,6 +1348,13 @@ return items;
       if (Number.isFinite(lat) && Number.isFinite(lon)){
         ICAO_COORDS.set(ident, { lat, lon });
       }
+      // Info (best-effort)
+      try{
+        const name = idxName >= 0 ? (cols[idxName] || "").trim() : "";
+        const city = idxMunicip >= 0 ? (cols[idxMunicip] || "").trim() : "";
+        const country = idxCountry >= 0 ? (cols[idxCountry] || "").trim() : "";
+        if (name || city || country) ICAO_INFO.set(ident, { name, city, country });
+      } catch(e){}
       need.delete(ident);
       if (!need.size) break;
     }
@@ -1381,9 +1425,10 @@ return items;
     if (pts.length){
       const bounds = L.latLngBounds(pts);
       MAP.fitBounds(bounds.pad(0.35));
+      setStatus("buildStatus", `Map updated: ${pts.length} marker(s) plotted.`);
     } else {
-      // no coords
       MAP.setView([50, 10], 4);
+      setStatus("buildStatus", "Map: no markers plotted (coordinates blocked/unresolved). If on a restricted network, external dataset or map tiles may be blocked.");
     }
   }
 
@@ -1516,7 +1561,7 @@ async function buildReport(){
     const top = matched.slice(0, maxHot);
 
     if (!top.length){
-      tbody.innerHTML = `<tr><td colspan="7" style="color:rgba(233,238,252,0.70); font-weight:700;">No Wizz-matching items found (at this threshold).</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="color:rgba(233,238,252,0.70); font-weight:700;">No Wizz-matching items found (at this threshold).</td></tr>`;
     } else {
       tbody.innerHTML = top.map(it => {
         const cls = it.sev === "RED" ? "red" : (it.sev === "AMBER" ? "amb" : "gre");
@@ -1532,6 +1577,9 @@ async function buildReport(){
           <td style="font-family: var(--sans); font-weight: 750;">${escapeHtml(station)}</td>
           <td>${escapeHtml(it.time)}</td>
           <td>${escapeHtml(drivers || "—")}</td>
+          <td style="max-width:380px; white-space: normal; font-family: var(--sans); font-weight: 700; line-height:1.35; color: rgba(233,238,252,0.86);">
+            ${escapeHtml(explainSnippet(it.raw || it.snippet || ""))}
+          </td>
           <td style="max-width:520px; white-space: normal; font-family: var(--sans); font-weight: 700; line-height:1.35;">
             ${escapeHtml(it.snippet || "")}
           </td>
@@ -1633,25 +1681,7 @@ async function buildReport(){
     }
   });
 
-  $("btnFetchPdf").addEventListener("click", async () => {
-    const url = $("pdfUrl").value.trim();
-    const proxy = ($("proxyUrl") ? $("proxyUrl").value.trim() : "");
-    const fetchUrl = proxy ? (proxy + encodeURIComponent(url)) : url;
-    if (!url){ setStatus("pdfStatus", "Enter a PDF URL."); return; }
-    setStatus("pdfStatus", "Fetching PDF… " + url);
-    try{
-      const buf = await loadPdfFromUrl(fetchUrl);
-      PDF_TEXT = await extractTextFromPdfArrayBuffer(buf);
-      PDF_SOURCE = url; // keep original as source
-      PDF_LOADED_AT = nowLocal();
-      setStatus("pdfStatus", "PDF loaded from URL.");
-    } catch(e){
-      console.error(e);
-      setStatus("pdfStatus", "URL load failed (likely CORS). Download and use PDF upload instead.");
-    }
-  });
-
-  $("btnLoadPdfFile").addEventListener("click", async () => {
+    $("btnLoadPdfFile").addEventListener("click", async () => {
     const f = $("pdfFile").files[0];
     if (!f){ setStatus("pdfStatus", "No PDF selected."); return; }
     setStatus("pdfStatus", "Parsing PDF…");
@@ -1675,20 +1705,7 @@ async function buildReport(){
     $("debugBox").textContent = "Ready.";
   });
 
-  $("btnSetToday").addEventListener("click", () => {
-    // Heuristic: replace YYYYMMDD patterns in the URL with today's UTC date.
-    // If multiple matches exist, replace all.
-    const url = $("pdfUrl").value.trim();
-    const proxy = ($("proxyUrl") ? $("proxyUrl").value.trim() : "");
-    const fetchUrl = proxy ? (proxy + encodeURIComponent(url)) : url;
-    if (!url){ setStatus("pdfStatus", "Paste a URL first, then click Set date."); return; }
-    const ymd = todayUtcYmd();
-    const updated = url.replace(/\b20\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/g, ymd);
-    $("pdfUrl").value = updated;
-    setStatus("pdfStatus", `URL date set to ${ymd} (UTC) if pattern was found.`);
-  });
-
-  $("btnBuild").addEventListener("click", buildReport);
+    $("btnBuild").addEventListener("click", buildReport);
   $("btnCopy").addEventListener("click", copyMeetingSummary);
   $("btnPrint").addEventListener("click", () => window.print());
   $("btnDocx").addEventListener("click", exportDocx);
@@ -1703,7 +1720,7 @@ async function buildReport(){
   // Auto-run if query params request it
   (async () => {
     const q = getQueryParams();
-    if (q.pdf) $("pdfUrl").value = q.pdf;
+    
     if (q.autoload) await autoLoadFromRepo();
     if (q.autobuild) buildReport();
   })();
